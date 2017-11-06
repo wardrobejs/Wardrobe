@@ -1,0 +1,17 @@
+{
+  "name": "wardrobe",
+  "version": "1.0.0",
+  "description": "Webstack for NodeJS",
+  "main": "src/Wardrobe/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Yme-Jan Iedema <yme-jan@iedema.me>",
+  "license": "MIT",
+  "dependencies": {
+    "apex-di": "^0.0.6",
+    "dot-object": "^1.7.0",
+    "get-parameter-names": "^0.3.0",
+    "globby": "^6.1.0"
+  }
+}
