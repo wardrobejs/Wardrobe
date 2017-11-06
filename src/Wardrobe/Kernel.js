@@ -42,8 +42,10 @@ class Kernel
     _initializeContainer ()
     {
         this.registerContainerConfiguration(this.getContainerLoader());
-
         this._container.addCompilerPass(ContainerAware);
+        this._container.setParameter('kernel', this);
+
+        this._setPathParameters();
 
         if (dot.pick('services.autoload', this._config)) {
             Object.keys(require.cache).forEach(file => {
@@ -74,6 +76,18 @@ class Kernel
             });
         }
     }
+
+    _setPathParameters ()
+    {
+        let appKernel = Object.keys(require.cache).filter(o => require.cache[o].filename.indexOf('AppKernel.js') !== -1)[0];
+
+        let app_dir = path.dirname(appKernel);
+        let project_dir = path.dirname(app_dir);
+
+        this._container.setParameter('root_dir', app_dir);
+        this._container.setParameter('project_dir', project_dir);
+    }
+
 
     _buildContainer ()
     {
