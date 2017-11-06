@@ -1,7 +1,9 @@
 const glob       = require('globby'),
       dot        = require('dot-object'),
-      parameters = require('./Helpers/parameters');
-instanceOf       = require('./Helpers/instanceof');
+      parameters = require('./Helpers/parameters'),
+      instanceOf = require('./Helpers/instanceof');
+
+const ContainerAware = require('./Compilers/ContainerAware');
 
 const DI                            = require('apex-di'),
       YamlFileLoader                = require('./Loaders/YamlFileLoader'),
@@ -41,6 +43,8 @@ class Kernel
     {
         this.registerContainerConfiguration(this.getContainerLoader());
 
+        this._container.addCompilerPass(ContainerAware);
+
         if (dot.pick('services.autoload', this._config)) {
             Object.keys(require.cache).forEach(file => {
                 Object.keys(this._bundles).forEach((name) => {
@@ -59,7 +63,7 @@ class Kernel
                             let definition = new DI.Definition(c, args);
 
                             if (instanceOf(c, 'Controller')) {
-                                definition.addMethodCall('setContainer', [this._container]);
+                                definition.addTag('container_aware');
                             }
 
                             this._container.setDefinition(c.name, definition);
@@ -68,7 +72,6 @@ class Kernel
                     }
                 });
             });
-
         }
     }
 
