@@ -1,6 +1,7 @@
 const glob       = require('globby'),
       dot        = require('dot-object'),
-      parameters = require('get-parameter-names');
+      parameters = require('./Helpers/parameters');
+instanceOf       = require('./Helpers/instanceof');
 
 const DI                            = require('apex-di'),
       YamlFileLoader                = require('./Loaders/YamlFileLoader'),
@@ -53,10 +54,15 @@ class Kernel
                                 continue;
                             }
 
-                            let c    = require(found);
-                            let args = parameters(c).map(a => `@${a}`);
+                            let c          = require(found);
+                            let args       = parameters(c).map(a => `@${a}`);
+                            let definition = new DI.Definition(c, args);
 
-                            this._container.setDefinition(c.name, new DI.Definition(c, args));
+                            if (instanceOf(c, 'Controller')) {
+                                definition.addMethodCall('setContainer', [this._container]);
+                            }
+
+                            this._container.setDefinition(c.name, definition);
 
                         }
                     }

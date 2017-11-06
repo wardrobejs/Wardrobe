@@ -11,7 +11,6 @@
   "dependencies": {
     "apex-di": "^0.0.6",
     "dot-object": "^1.7.0",
-    "get-parameter-names": "^0.3.0",
     "globby": "^6.1.0"
   }
 }
