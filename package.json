@@ -10,7 +10,11 @@
   "license": "MIT",
   "dependencies": {
     "apex-di": "^0.0.6",
+    "doctrine": "^2.0.0",
     "dot-object": "^1.7.0",
-    "globby": "^6.1.0"
+    "get-parameter-names": "^0.3.0",
+    "globby": "^6.1.0",
+    "mime-types": "^2.1.17",
+    "swig": "^1.4.2"
   }
 }
