@@ -10,6 +10,10 @@ class CustomYamlLoader extends DI.YamlLoader
 
     _parse (container, path_info, data)
     {
+        if (!data) {
+            return;
+        }
+
         super._parse(container, path_info, data);
 
         if (typeof data.framework !== 'undefined') {

@@ -8,11 +8,12 @@ const DI         = require('apex-di'),
       https      = require('https'),
       swig       = require('swig');
 
-const ContainerAware = require('./Compilers/ContainerAware'),
-      SwigExtension  = require('./Compilers/SwigExtension'),
-      Route          = require('./Annotation/Route'),
-      AssetManager   = require('./Asset/AssetManager'),
-      HttpKernel     = require('./HttpKernel');
+const ContainerAware  = require('./Compilers/ContainerAware'),
+      SwigExtension   = require('./Compilers/SwigExtension'),
+      SetSwigRenderer = require('./Compilers/SetSwigRenderer'),
+      Route           = require('./Annotation/Route'),
+      AssetManager    = require('./Asset/AssetManager'),
+      HttpKernel      = require('./HttpKernel');
 
 const YamlFileLoader                = require('./Loaders/YamlFileLoader'),
       AnnotationParser              = require('./Helpers/AnnotationParser'),
@@ -91,7 +92,6 @@ class Kernel
                 return kernel;
             }, [this]
         ));
-
     }
 
     _initializeContainer ()
@@ -100,6 +100,7 @@ class Kernel
 
         this._container.addCompilerPass(ContainerAware);
         this._container.addCompilerPass(SwigExtension);
+        this._container.addCompilerPass(SetSwigRenderer);
 
         this._setPathParameters();
 
