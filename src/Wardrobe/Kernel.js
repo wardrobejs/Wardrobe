@@ -5,15 +5,14 @@ const DI         = require('apex-di'),
       instanceOf = require('./Helpers/instanceof'),
       search     = require('./Helpers/search'),
       http       = require('http'),
-      https      = require('https'),
-      swig       = require('swig');
+      https      = require('https');
 
 const ContainerAware  = require('./Compilers/ContainerAware'),
-      SwigExtension   = require('./Compilers/SwigExtension'),
       SetSwigRenderer = require('./Compilers/SetSwigRenderer'),
       Route           = require('./Annotation/Route'),
       AssetManager    = require('./Asset/AssetManager'),
-      HttpKernel      = require('./HttpKernel');
+      HttpKernel      = require('./HttpKernel'),
+      Swig            = require('./Swig/Renderer');
 
 const YamlFileLoader                = require('./Loaders/YamlFileLoader'),
       AnnotationParser              = require('./Helpers/AnnotationParser'),
@@ -72,14 +71,7 @@ class Kernel
         this._container.setDefinition('http_kernel', new DI.Definition(HttpKernel, [this]));
         this._container.setDefinition('asset_manager', new DI.Definition(AssetManager, [this]));
 
-        this._container.setDefinition('swig', new DI.Definition(
-            function (swig) {
-                if (self._debug) {
-                    swig.setDefaults({cache: false});
-                }
-                return swig;
-            }, [swig]
-        ));
+        this._container.setDefinition('swig', new DI.Definition(Swig, ['@container']));
 
         this._container.setDefinition('container', new DI.Definition(
             function (container) {
@@ -99,7 +91,6 @@ class Kernel
         this.registerContainerConfiguration(this.getContainerLoader());
 
         this._container.addCompilerPass(ContainerAware);
-        this._container.addCompilerPass(SwigExtension);
         this._container.addCompilerPass(SetSwigRenderer);
 
         this._setPathParameters();

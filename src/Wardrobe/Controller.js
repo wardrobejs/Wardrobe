@@ -1,11 +1,10 @@
-const dot  = require('dot-object'),
-      swig = require('swig');
+const dot  = require('dot-object');
 
 const NotFoundHttpException = require('./Exceptions/NotFoundHttpException');
 
 class Controller
 {
-    setRenderer ()
+    setRenderer (swig)
     {
         this._swig = swig;
     }
@@ -29,9 +28,7 @@ class Controller
             throw new NotFoundHttpException(`Unable to find ${template} for rendering`);
         }
 
-        let render = this._swig.compileFile(asset.file);
-
-        return render(parameters);
+        return this._swig.render(asset.file, parameters);
     }
 
 }
