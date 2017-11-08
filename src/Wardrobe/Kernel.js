@@ -123,7 +123,7 @@ class Kernel
 
                             if (instanceOf(c, 'Controller')) {
                                 definition.addTag('container_aware');
-                                definition.addTag('render');
+                                definition.addTag('swig');
                             }
 
                             this._container.setDefinition(c.name, definition);

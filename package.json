@@ -1,6 +1,6 @@
 {
   "name": "wardrobe",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Webstack for NodeJS",
   "main": "src/Wardrobe/index.js",
   "scripts": {
