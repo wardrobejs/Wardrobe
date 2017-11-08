@@ -14,12 +14,16 @@ class AnnotationParser
 
     parse (instance)
     {
-        let source     = instance.toString();
-        let classMatch = source.match(/class\s+(.*?)[\s{]+/);
-        if (!classMatch) {
-            return;
+
+        let source    = instance.toString();
+        let className = instance.name;
+
+        for (let name of Object.keys(this._kernel._container.$.definitions)) {
+            let def = this._kernel._container.$.definitions[name];
+            if (def.$.class_function === instance) {
+                className = name;
+            }
         }
-        let className = classMatch[1];
 
         let match, regexp = /\/\*{2}([\s\S]+?)\*\/[\s\S]+?([A-Za-z0-9\_]+)/g;
         while (match = regexp.exec(source)) {
@@ -35,7 +39,7 @@ class AnnotationParser
                 let data       = this._dataBuilder(tag.description);
                 data._kernel   = this._kernel;
                 data._metadata = {
-                    class:  instance.name,
+                    class:  className,
                     method: match[2]
                 };
 

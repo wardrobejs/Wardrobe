@@ -5,17 +5,11 @@ const NotFoundHttpException = require('./Exceptions/NotFoundHttpException');
 
 class Controller
 {
-    constructor (swig)
+    constructor (swig, container)
     {
-        this._swig = swig;
-        this._container = null;
-    }
-
-    setContainer (container)
-    {
+        this._swig          = swig;
         this._container     = container;
         this._asset_manager = this._container.get('asset_manager');
-        this._http_kernel   = this._container.get('http_kernel');
     }
 
     getContainer ()

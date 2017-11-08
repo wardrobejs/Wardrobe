@@ -73,11 +73,17 @@ class Kernel
 
         this._container.setDefinition('swig', new DI.Definition(
             function (swig) {
-                if(self._debug) {
+                if (self._debug) {
                     swig.setDefaults({cache: false});
                 }
                 return swig;
             }, [swig]
+        ));
+
+        this._container.setDefinition('container', new DI.Definition(
+            function (container) {
+                return container;
+            }, [this._container]
         ));
 
         this._container.setDefinition('kernel', new DI.Definition(

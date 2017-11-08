@@ -10,7 +10,6 @@ class Route
     {
         this.path = undefined;
 
-
         if (typeof data.value !== 'undefined') {
             data.path = data.value;
             delete data['value'];

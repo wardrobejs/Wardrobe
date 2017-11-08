@@ -6,7 +6,7 @@ class ContainerAware extends DI.AbstractCompilerPass
     {
         let service_ids = container.findTaggedServiceIds('container_aware');
         service_ids.forEach((id) => {
-            container.getDefinition(id).addMethodCall('setContainer', [container]);
+            container.getDefinition(id).replaceArgument(1, '@container');
         });
     }
 }
