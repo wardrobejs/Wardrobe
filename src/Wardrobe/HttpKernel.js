@@ -14,7 +14,7 @@ class HttpKernel
     {
         try {
 
-            let handler = this._realHandler(request);
+            let handler = this._realHandler(request, response);
             if (typeof handler !== 'string' && !(handler instanceof Buffer)) {
                 handler = JSON.stringify(handler);
             }
@@ -33,7 +33,7 @@ class HttpKernel
         }
     }
 
-    _realHandler (request)
+    _realHandler (request, response)
     {
         let parameters     = request.url.split('?');
         request.url        = parameters.shift();
@@ -55,8 +55,10 @@ class HttpKernel
             }
         }
 
-        if(typeof this._static[request.url] !== 'undefined') {
-            return this._static[request.url].getBuffer();
+        let asset = this._static[request.url];
+        if(typeof asset !== 'undefined') {
+            response.setHeader('content-type', asset.type);
+            return asset.getBuffer();
         }
 
         throw new NotFoundHttpException(`${request.url} does not match any route`, 404);
