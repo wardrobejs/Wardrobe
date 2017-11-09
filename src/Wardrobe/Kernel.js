@@ -147,7 +147,7 @@ class Kernel
         options = options || {};
 
         if (typeof options['ssl'] !== 'undefined') {
-            https.createServer(options, this._handle.bind(this)).listen(port);
+            https.createServer(options['ssl'], this._handle.bind(this)).listen(port);
             return;
         }
 
