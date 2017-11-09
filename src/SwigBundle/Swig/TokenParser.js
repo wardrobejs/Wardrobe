@@ -1,4 +1,4 @@
-const MethodNotImplementedException = require('../Exceptions/MethodNotImplementedException');
+const MethodNotImplementedException = require('../../Wardrobe/Exception/MethodNotImplementedException');
 
 class TokenParser
 {

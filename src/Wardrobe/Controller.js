@@ -1,6 +1,4 @@
-const dot  = require('dot-object');
-
-const NotFoundHttpException = require('./Exceptions/NotFoundHttpException');
+const NotFoundHttpException = require('./Exception/NotFoundHttpException');
 
 class Controller
 {

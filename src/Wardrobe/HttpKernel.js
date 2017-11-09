@@ -1,12 +1,14 @@
-const NotFoundHttpException = require('./Exceptions/NotFoundHttpException');
+const NotFoundHttpException = require('./Exception/NotFoundHttpException');
 
 class HttpKernel
 {
     constructor (kernel)
     {
-        this._kernel    = kernel;
-        this._routes    = [];
+        this._kernel = kernel;
+        this._routes = [];
+        this._static = {};
     }
+
 
     handle (request, response)
     {
@@ -53,12 +55,23 @@ class HttpKernel
             }
         }
 
+        if(typeof this._static[request.url] !== 'undefined') {
+            return this._static[request.url].getBuffer();
+        }
+
         throw new NotFoundHttpException(`${request.url} does not match any route`, 404);
     }
 
     addRoute (route)
     {
         this._routes.push(route);
+    }
+
+    addAsset (asset)
+    {
+        if(typeof this._static[asset.getPublic()] === 'undefined') {
+            this._static[asset.getPublic()] = asset;
+        }
     }
 
 }

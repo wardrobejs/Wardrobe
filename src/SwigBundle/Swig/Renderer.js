@@ -21,11 +21,11 @@ class Renderer
 
             this._addFilters(service.getFilters(), service);
             this._addFunctions(service.getFunctions(), service);
-            this._addTags(service.getTokenParsers(), service);
+            this._addTags(service.getTokenParsers());
         }
     }
 
-    _addTags (data, service)
+    _addTags (data)
     {
         if (!data) {
             return;

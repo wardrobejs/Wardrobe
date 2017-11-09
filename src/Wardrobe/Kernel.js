@@ -1,24 +1,18 @@
 const DI         = require('apex-di'),
-      glob       = require('globby'),
-      dot        = require('dot-object'),
-      parameters = require('./Helpers/parameters'),
-      instanceOf = require('./Helpers/instanceof'),
-      search     = require('./Helpers/search'),
+      search     = require('./Helper/search'),
       http       = require('http'),
       https      = require('https');
 
-const ContainerAware  = require('./Compilers/ContainerAware'),
-      SetSwigRenderer = require('./Compilers/SetSwigRenderer'),
-      Route           = require('./Annotation/Route'),
-      AssetManager    = require('./Asset/AssetManager'),
-      HttpKernel      = require('./HttpKernel'),
-      Swig            = require('./Swig/Renderer');
+const ContainerAware   = require('./Compiler/ContainerAware'),
+      Route            = require('./Annotation/Route'),
+      AssetManager     = require('./Asset/AssetManager'),
+      HttpKernel       = require('./HttpKernel'),
+      AnnotationParser = require('./AnnotationParser');
 
-const YamlFileLoader                = require('./Loaders/YamlFileLoader'),
-      AnnotationParser              = require('./Helpers/AnnotationParser'),
-      MethodNotImplementedException = require('./Exceptions/MethodNotImplementedException'),
-      LogicException                = require('./Exceptions/LogicException'),
-      InvalidArgumentException      = require('./Exceptions/InvalidArgumentException');
+const YamlFileLoader                = require('./Loader/YamlFileLoader'),
+      MethodNotImplementedException = require('./Exception/MethodNotImplementedException'),
+      LogicException                = require('./Exception/LogicException'),
+      InvalidArgumentException      = require('./Exception/InvalidArgumentException');
 
 class Kernel
 {
@@ -30,10 +24,12 @@ class Kernel
         this._bundles           = {};
         this._config            = {};
         this._annotation_parser = new AnnotationParser(this);
+        this._yaml_loader       = new YamlFileLoader(this);
 
-        this._initializeAnnotationParsers();
 
         this._initializeBundles();
+
+        this._initializeAnnotationParsers();
 
         this._addDefinitions();
 
@@ -63,15 +59,25 @@ class Kernel
     _initializeAnnotationParsers ()
     {
         this._annotation_parser.register('Route', Route);
+
+        Object.keys(this._bundles).forEach((name) => {
+            let bundle = this._bundles[name];
+            if (!fs.existsSync(path.join(bundle.path, 'Annotation'))) {
+                return;
+            }
+            fs.readdirSync(path.join(bundle.path, 'Annotation')).forEach((file) => {
+                file  = path.join(bundle.path, 'Annotation', file);
+                let c = require(file);
+                this._annotation_parser.register(c.name, c);
+            });
+        });
+
     }
 
     _addDefinitions ()
     {
-        let self = this;
         this._container.setDefinition('http_kernel', new DI.Definition(HttpKernel, [this]));
         this._container.setDefinition('asset_manager', new DI.Definition(AssetManager, [this]));
-
-        this._container.setDefinition('swig', new DI.Definition(Swig, ['@container']));
 
         this._container.setDefinition('container', new DI.Definition(
             function (container) {
@@ -91,38 +97,17 @@ class Kernel
         this.registerContainerConfiguration(this.getContainerLoader());
 
         this._container.addCompilerPass(ContainerAware);
-        this._container.addCompilerPass(SetSwigRenderer);
+
+        // Load all bundles
+        Object.keys(this._bundles).forEach((name) => {
+            let bundle = this._bundles[name];
+            let config = path.join(bundle.path, 'Resources', 'config', 'config.yml');
+            if (fs.existsSync(config)) {
+                this._yaml_loader.load(config);
+            }
+        });
 
         this._setPathParameters();
-
-        if (dot.pick('services.autoload', this._config)) {
-            Object.keys(require.cache).forEach(file => {
-                Object.keys(this._bundles).forEach((name) => {
-                    if (require.cache[file].exports.name === name) {
-                        let moduleFile = path.normalize(file);
-                        let modulePath = path.dirname(file);
-
-                        let files = glob.sync('**/*.js', {cwd: modulePath, absolute: true});
-                        for (let found of files) {
-                            if (path.normalize(found) === moduleFile) {
-                                continue;
-                            }
-
-                            let c          = require(found);
-                            let args       = parameters(c).map(a => `@${a}`);
-                            let definition = new DI.Definition(c, args);
-
-                            if (instanceOf(c, 'Controller')) {
-                                definition.addTag('container_aware');
-                                definition.addTag('swig');
-                            }
-
-                            this._container.setDefinition(c.name, definition);
-                        }
-                    }
-                });
-            });
-        }
 
         Object.keys(this._container.$.definitions).forEach(key => {
             let d = this._container.$.definitions[key];
@@ -172,7 +157,7 @@ class Kernel
 
     getContainerLoader ()
     {
-        return new YamlFileLoader(this);
+        return new YamlFileLoader(this); //this._yaml_loader;
     }
 
     getConfig ()
@@ -195,6 +180,8 @@ class Kernel
         if (!this._bundles.hasOwnProperty(name)) {
             throw new InvalidArgumentException(`Bundle "${name}" does not exist or it is not enabled. Maybe you forgot to add it in the registerBundles() method of your ${this.constructor.name}.js file?'`);
         }
+
+        return this._bundles[name];
     }
 
     registerContainerConfiguration ()

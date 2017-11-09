@@ -1,9 +1,9 @@
-var COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
-var DEFAULT_PARAMS = /=[^,]+/mg;
-var FAT_ARROWS = /=>.*$/mg;
+let COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
+let DEFAULT_PARAMS = /=[^,]+/mg;
+let FAT_ARROWS = /=>.*$/mg;
 
 function getParameterNames(fn) {
-    var code = fn.toString()
+    let code = fn.toString()
                  .replace(COMMENTS, '')
                  .replace(FAT_ARROWS, '')
                  .replace(DEFAULT_PARAMS, '');
@@ -13,7 +13,7 @@ function getParameterNames(fn) {
     }
 
     code = code.replace(/constructor\s+\(/, 'constructor(');
-    var result = code.slice(code.indexOf('constructor') + 12, code.indexOf(')'))
+    let result = code.slice(code.indexOf('constructor') + 12, code.indexOf(')'))
                      .match(/([^\s,]+)/g);
 
     return result === null

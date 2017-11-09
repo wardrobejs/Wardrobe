@@ -1,7 +1,6 @@
-const iterator = require('./iterator'),
-      doctrine = require('doctrine');
+const doctrine = require('doctrine');
 
-const InvalidArgumentException = require('../Exceptions/InvalidArgumentException');
+const InvalidArgumentException = require('./Exception/InvalidArgumentException');
 
 class AnnotationParser
 {
@@ -52,6 +51,10 @@ class AnnotationParser
 
     _dataBuilder (description)
     {
+        if (!description) {
+            return {};
+        }
+
         let chunks = description.substr(1, description.length - 2).split(',');
         let data   = {};
 
@@ -59,7 +62,13 @@ class AnnotationParser
             chunk = chunk.trim();
 
             // grab the value
-            let match = chunk.match(/(["'])(?:(?=(\\?))\2.)*?\1/)[0];
+            let match = chunk.match(/(["'])(?:(?=(\\?))\2.)*?\1/);
+            if (!match) {
+                return {};
+            }
+
+            match = match[0];
+
             let value = match.substr(1, match.length - 2);
 
             let key = chunk.replace(match, '');

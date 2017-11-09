@@ -1,13 +1,13 @@
-const iterator   = require('../Helpers/iterator'),
-      search     = require('../Helpers/search'),
+const iterator   = require('../Helper/iterator'),
       parameters = require('get-parameter-names');
 
-const InvalidArgumentException = require('../Exceptions/InvalidArgumentException');
+const InvalidArgumentException = require('../Exception/InvalidArgumentException');
 
 class Route
 {
     constructor (data)
     {
+
         this.path = undefined;
 
         if (typeof data.value !== 'undefined') {

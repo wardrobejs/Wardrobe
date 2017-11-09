@@ -2,6 +2,7 @@ class Asset
 {
     constructor (data)
     {
+        this.bundle    = data.bundle;
         this.name      = data.name;
         this.base      = data.base;
         this.type      = data.type;
@@ -27,8 +28,14 @@ class Asset
         return new Buffer(fs.readFileSync(this.file));
     }
 
-    getBase64 () {
+    getBase64 ()
+    {
         return `data:${this.type};base64,${this.getBuffer().toString('base64')}`;
+    }
+
+    getPublic ()
+    {
+        return this.asset_url.replace('://', '/').replace('@', '/').toLowerCase();
     }
 }
 

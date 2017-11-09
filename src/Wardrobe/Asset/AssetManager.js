@@ -1,3 +1,5 @@
+const NotFoundHttpException = require('../../Wardrobe/Exception/NotFoundHttpException');
+
 const Asset = require('./Asset');
 
 class AssetManager
@@ -23,8 +25,8 @@ class AssetManager
         });
 
         const iterate = (bundle_name, bundle_path) => {
-            if (fs.statSync(bundle_path).isDirectory() && fs.existsSync(path.join(bundle_path, 'Resources'))) {
-                this._refreshPackageResources(bundle_name, path.join(bundle_path, 'Resources'));
+            if (fs.statSync(bundle_path).isDirectory() && fs.existsSync(path.join(bundle_path))) {
+                this._refreshPackageResources(bundle_name, path.join(bundle_path));
             }
         };
 
@@ -79,8 +81,8 @@ class AssetManager
             return;
         }
 
-        let scope        = this.packages[package_name],
-            paths        = [];
+        let scope = this.packages[package_name],
+            paths = [];
 
         let _lookupAsset = () => {
             let dir = asset_path.shift();
@@ -92,7 +94,7 @@ class AssetManager
             }
             if (typeof scope[dir] === 'undefined') {
                 if (throw_error) {
-                    throw new Error('Unable to resolve "' + name + '". "' + dir + '" does not exist in "' + package_name + "://" + paths.join('/') + '"');
+                    throw new Error('Unable to resolve "' + name + '". "' + dir + '" does not exist in "' + package_name + '://' + paths.join('/') + '"');
                 }
                 return;
             }
@@ -102,6 +104,22 @@ class AssetManager
         };
 
         return _lookupAsset();
+    }
+
+    /**
+     * Publish an asset to be web-accessable
+     *
+     * @param name
+     * @param force_file
+     * @param throw_error
+     */
+    publish (name, force_file, throw_error)
+    {
+        let asset = this.resolve(name, force_file, throw_error);
+
+        this._kernel.getHttpKernel().addAsset(asset);
+
+        return asset.getPublic();
     }
 
     /**
@@ -132,9 +150,10 @@ class AssetManager
                     return;
                 }
 
-                info.asset_url    = '@' + package_name + ':/' + info.dir.replace(/\\/g, '/').split('/Resources')[1] + '/' + info.base;
+                info.asset_url    = '@' + package_name + ':/' + info.dir.replace(/\\/g, '/').split(`/${package_name}`)[1] + '/' + info.base;
                 info.type         = require('mime-types').lookup(file);
                 info.file         = path.resolve(path.join(info.dir, info.base));
+                info.bundle       = package_name;
                 target[info.base] = new Asset(info);
             });
         };

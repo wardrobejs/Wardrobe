@@ -1,0 +1,15 @@
+passes:
+    - !require '@SwigBundle://Compilers/SetSwigRenderer'
+
+services:
+    swig:
+        class: !require '@SwigBundle://Swig/Renderer'
+        tags: ['renderer']
+        arguments:
+            - '@container'
+
+    swig.extension.default:
+        class: !require '@SwigBundle://Swig/DefaultExtension'
+        tags: ['swig.extension']
+        arguments:
+            - '@asset_manager'
