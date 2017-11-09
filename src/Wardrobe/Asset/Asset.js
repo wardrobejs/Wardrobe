@@ -26,6 +26,10 @@ class Asset
     {
         return new Buffer(fs.readFileSync(this.file));
     }
+
+    getBase64 () {
+        return `data:${this.type};base64,${this.getBuffer().toString('base64')}`;
+    }
 }
 
 module.exports = Asset;
