@@ -10,11 +10,13 @@ class Renderer
         let service_ids = container.findTaggedServiceIds('swig.extension');
         let kernel      = container.get('kernel');
         this.swigOpts   = {};
-        this.locals     = {};
+        this.swigOpts.locals = {};
 
         if (kernel._debug) {
             this.swigOpts.cache = false;
         }
+
+        swig.setDefaults(this.swigOpts);
 
         for (let id of service_ids) {
             let service = container.get(id);
@@ -61,14 +63,14 @@ class Renderer
 
         Object.keys(data).forEach((name) => {
             if (typeof data[name] === 'function') {
-                this.locals[name] = data[name].bind(service);
+                this.swigOpts.locals[name] = data[name].bind(service);
             }
         });
     }
 
     render (source, options)
     {
-        return swig.compileFile(source, {locals: this.locals})(options);
+        return swig.compileFile(source, this.swigOpts)(options);
     }
 
 }
