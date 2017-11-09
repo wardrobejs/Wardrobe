@@ -9,19 +9,18 @@ class Renderer
     {
         let service_ids = container.findTaggedServiceIds('swig.extension');
         let kernel      = container.get('kernel');
-        let swigOpts = {};
+        this.swigOpts   = {};
+        this.locals     = {};
 
         if (kernel._debug) {
-            swigOpts.cache = false;
+            this.swigOpts.cache = false;
         }
-
-        swig.setDefaults(swigOpts);
 
         for (let id of service_ids) {
             let service = container.get(id);
 
             this._addFilters(service.getFilters(), service);
-            this._addExtensions(service.getFunctions(), service);
+            this._addFunctions(service.getFunctions(), service);
             this._addTags(service.getTokenParsers(), service);
         }
     }
@@ -54,20 +53,22 @@ class Renderer
         });
     }
 
-    _addExtensions (data, service)
+    _addFunctions (data, service)
     {
         if (!data) {
             return;
         }
 
         Object.keys(data).forEach((name) => {
-            swig.setExtension(name, data[name].bind(service));
+            if (typeof data[name] === 'function') {
+                this.locals[name] = data[name].bind(service);
+            }
         });
     }
 
     render (source, options)
     {
-        return swig.compileFile(source)(options);
+        return swig.compileFile(source, {locals: this.locals})(options);
     }
 
 }
