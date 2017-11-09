@@ -1,5 +1,5 @@
 <p align="center"><a href="https://wardrobe.avii.nl" target="_blank">
-    <img src="https://s4.aconvert.com/convert/p3r68-cdx67/saetz-khl3n.svg">
+    <img src="https://wardrobe.avii.nl/appbundle/resources/public/images/wardrobe_320.png" width="289">
 </a></p>
 
 [Wardrobe][1] is a **NodeJS framework** for web applications heavily inspired by [Symfony][2].
