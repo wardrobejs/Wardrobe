@@ -35,7 +35,13 @@ class Swig
                 throw new NotFoundHttpException(`Unable to find '${data.template}' for rendering`)
             }
 
-            return s.render(asset.file, methodBody.bind(c)());
+            let bodyValue = methodBody.bind(c)();
+
+            if(typeof bodyValue !== 'object') {
+                throw new Error(`Invalid type returned from ${c.constructor.name}.${data._metadata.method}(). Exptected an 'object', but received '${typeof bodyValue}' instead`);
+            }
+
+            return s.render(asset.file, bodyValue);
         }
     }
 }
