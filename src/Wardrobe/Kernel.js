@@ -16,6 +16,10 @@ const YamlFileLoader                = require('./Loader/YamlFileLoader'),
 
 class Kernel
 {
+    get VERSION() {
+        return require('../../package.json').version;
+    }
+
     constructor (environment, debug)
     {
         this._environment       = environment;

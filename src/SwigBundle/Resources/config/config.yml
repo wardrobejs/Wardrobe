@@ -7,3 +7,9 @@ services:
         tags: ['renderer']
         arguments:
             - '@container'
+
+    swig.extension.default:
+        class: !require '@SwigBundle://Swig/DefaultExtension'
+        tags: ['swig.extension']
+        arguments:
+            - '@container'
