@@ -40,14 +40,14 @@ class Swig
             let controller = _class.constructor.name.replace('Controller', '').toLowerCase();
             let action     = data._metadata.method.replace('Action', '').toLowerCase();
 
-            data.template = path.join(_bundle.path, 'Resources', 'views', controller, `${action}.html.twig`);
+            data.template = path.join(controller, `${action}.html.twig`);
         }
 
         let matches = data.template.match(/@(.+):\/\/(.*)/);
         if (matches) {
             let name      = matches[1];
             let dir       = matches[2];
-            data.template = path.join(this._kernel.getBundle(name).path, dir);
+            data.template = path.join(this._kernel.getBundle(name).path, 'Resources', 'views', dir);
         } else {
             data.template = path.join(_bundle.path, 'Resources', 'views', data.template);
         }

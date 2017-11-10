@@ -1,4 +1,4 @@
-const SwigExtension = require('../../index').Swig.SwigExtension;
+const SwigExtension = require('../../index').Swig.Extension;
 
 /**
  * Provides the asset(path) function to swig templates

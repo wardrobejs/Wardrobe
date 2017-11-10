@@ -12,8 +12,7 @@ module.exports = {
     AssetBundle: require('./AssetBundle/AssetBundle'),
 
     // Abstractions and Interfaces
-    Swig: {
-        SwigExtension: require('./SwigBundle/Swig/SwigExtension')
-    }
+    Swig: require('./SwigBundle/Swig/index'),
+    DI:   require('apex-di')
 
 };

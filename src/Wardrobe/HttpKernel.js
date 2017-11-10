@@ -12,6 +12,17 @@ class HttpKernel
 
     handle (request, response)
     {
+        let static_file = path.join(this._kernel.getContainer().getParameter('project_dir'), 'web', request.url);
+        if (fs.existsSync(static_file) && !fs.lstatSync(static_file).isDirectory()) {
+            let mimetype = require('mime-types').lookup(static_file);
+
+            response.setHeader('content-type', mimetype);
+            response.write(new Buffer(fs.readFileSync(static_file)));
+            response.end();
+
+            return;
+        }
+
         try {
 
             let handler = this._realHandler(request, response);
@@ -56,7 +67,7 @@ class HttpKernel
         }
 
         let asset = this._static[request.url];
-        if(typeof asset !== 'undefined') {
+        if (typeof asset !== 'undefined') {
             response.setHeader('content-type', asset.type);
             return asset.getBuffer();
         }
@@ -71,7 +82,7 @@ class HttpKernel
 
     addAsset (asset)
     {
-        if(typeof this._static[asset.getPublic()] === 'undefined') {
+        if (typeof this._static[asset.getPublic()] === 'undefined') {
             this._static[asset.getPublic()] = asset;
         }
     }
