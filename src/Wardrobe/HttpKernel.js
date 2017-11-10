@@ -1,11 +1,9 @@
-const NotFoundHttpException = require('./Exception/NotFoundHttpException');
-
 class HttpKernel
 {
-    constructor (kernel)
+    constructor (kernel, route)
     {
         this._kernel = kernel;
-        this._routes = [];
+        this._route  = route;
         this._static = {};
     }
 
@@ -57,27 +55,16 @@ class HttpKernel
             let key       = KvP.shift();
 
             request.parameters[key] = KvP.join('=');
-
         }
 
-        for (let route of this._routes) {
-            if (route.accepts(request)) {
-                return await route.handle(request);
-            }
-        }
-
+        // used for {{ asset() }}
         let asset = this._static[request.url];
         if (typeof asset !== 'undefined') {
             response.setHeader('content-type', asset.type);
             return asset.getBuffer();
         }
 
-        throw new NotFoundHttpException(`${request.url} does not match any route`, 404);
-    }
-
-    addRoute (route)
-    {
-        this._routes.push(route);
+        return await this._route.handle(request);
     }
 
     addAsset (asset)

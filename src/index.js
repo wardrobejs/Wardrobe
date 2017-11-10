@@ -16,3 +16,18 @@ module.exports = {
     DI:   require('apex-di')
 
 };
+
+Array.prototype.first = function () {
+    if (typeof this[0] !== 'undefined') {
+        return this[0];
+    }
+
+    return null;
+};
+
+Array.prototype.last = function () {
+    if (typeof this[this.length - 1] !== 'undefined') {
+        return this[this.length - 1];
+    }
+    return null;
+};

@@ -1,6 +1,8 @@
-const doctrine = require('doctrine');
+const doctrine = require('doctrine'),
+      extract  = require('./Helper/extract');
 
-const InvalidArgumentException = require('./Exception/InvalidArgumentException');
+const InvalidArgumentException = require('./Exception/InvalidArgumentException'),
+      MethodNotImplementedException = require('./Exception/MethodNotImplementedException');
 
 class AnnotationParser
 {
@@ -13,14 +15,26 @@ class AnnotationParser
 
     parse (instance)
     {
+        if (!instance) {
+            return;
+        }
 
-        let source    = instance.toString();
+        let file = Object.values(require.cache).filter(m => m.exports.toString() === instance.toString()).first();
+        if (!file) {
+            return;
+        }
+
+        file = file.filename;
+
+        let source = fs.readFileSync(file).toString();
+
+        let service   = instance.name;
         let className = instance.name;
 
         for (let name of Object.keys(this._kernel._container.$.definitions)) {
             let def = this._kernel._container.$.definitions[name];
             if (def.$.class_function === instance) {
-                className = name;
+                service = name;
             }
         }
 
@@ -30,7 +44,7 @@ class AnnotationParser
                 continue;
             }
 
-            let docs = doctrine.parse(match[1], {sloppy: true, unwrap: true, tags: Object.keys(this._compilers)});
+            let docs = doctrine.parse(match[1], {sloppy: true, unwrap: true, tags: Object.keys(this.compilers)});
             let tags = docs.tags;
 
             tags.forEach(tag => {
@@ -38,12 +52,17 @@ class AnnotationParser
                 let data       = this._dataBuilder(tag.description);
                 data._kernel   = this._kernel;
                 data._metadata = {
-                    class:  className,
-                    method: match[2].replace('async', '').trim()
+                    service: service,
+                    class:   className,
+                    method:  match[2].replace('async', '').trim()
                 };
 
                 let resolvedClass = this.resolve(tag.title);
-                new resolvedClass(data);
+                if(typeof resolvedClass.compile === 'undefined') {
+                    throw new MethodNotImplementedException(`${tag.title} does not implement compile(data)`);
+                }
+
+                resolvedClass.compile(data);
 
             });
         }
@@ -82,22 +101,28 @@ class AnnotationParser
         return data;
     }
 
-    resolve (name)
+    get compilers ()
     {
-        if (typeof this._compilers[name] === 'undefined') {
-            return false;
+        let _compilers = {};
+
+        let services = this._kernel.getContainer().findTaggedServiceIds('annotation');
+        for (let i of Object.keys(services)) {
+            let service                          = this._kernel.getContainer().get(services[i]);
+            _compilers[service.constructor.name] = service;
         }
 
-        return this._compilers[name];
+        return _compilers;
     }
 
-    register (name, cl)
+    resolve (name)
     {
-        if (typeof cl !== 'function') {
-            throw new InvalidArgumentException(`Invalid handler provided for ${name}`);
+        for (let i of Object.keys(this.compilers)) {
+            if (i === name) {
+                return this.compilers[i];
+            }
         }
 
-        this._compilers[name] = cl;
+        return undefined;
     }
 
 }

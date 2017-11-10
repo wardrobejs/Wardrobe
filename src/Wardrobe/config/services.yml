@@ -1,0 +1,12 @@
+services:
+    http_kernel:
+        class: !require '../HttpKernel'
+        arguments:
+            - '@kernel'
+            - '@route'
+
+    route:
+        class: !require '../Annotation/Route'
+        tags: ['annotation']
+        arguments:
+            - '@container'

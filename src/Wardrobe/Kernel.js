@@ -16,7 +16,8 @@ const YamlFileLoader                = require('./Loader/YamlFileLoader'),
 
 class Kernel
 {
-    get VERSION() {
+    get VERSION ()
+    {
         return require('../../package.json').version;
     }
 
@@ -30,14 +31,15 @@ class Kernel
         this._annotation_parser = new AnnotationParser(this);
         this._yaml_loader       = new YamlFileLoader(this);
 
-
         this._initializeBundles();
 
-        this._initializeAnnotationParsers();
+        this._initializeContainer();
 
         this._addDefinitions();
 
-        this._initializeContainer();
+        this._loadAnnotations();
+
+        this._setPathParameters();
 
     }
 
@@ -60,28 +62,8 @@ class Kernel
         }
     }
 
-    _initializeAnnotationParsers ()
-    {
-        this._annotation_parser.register('Route', Route);
-
-        Object.keys(this._bundles).forEach((name) => {
-            let bundle = this._bundles[name];
-            if (!fs.existsSync(path.join(bundle.path, 'Annotation'))) {
-                return;
-            }
-            fs.readdirSync(path.join(bundle.path, 'Annotation')).forEach((file) => {
-                file  = path.join(bundle.path, 'Annotation', file);
-                let c = require(file);
-                this._annotation_parser.register(c.name, c);
-            });
-        });
-
-    }
-
     _addDefinitions ()
     {
-        this._container.setDefinition('http_kernel', new DI.Definition(HttpKernel, [this]));
-
         this._container.setDefinition('container', new DI.Definition(
             function (container) {
                 return container;
@@ -97,6 +79,8 @@ class Kernel
 
     _initializeContainer ()
     {
+        // Load configuration files
+        this.getContainerLoader().load(path.join(__dirname, 'config', 'services.yml'));
         this.registerContainerConfiguration(this.getContainerLoader());
 
         this._container.addCompilerPass(ContainerAware);
@@ -109,14 +93,13 @@ class Kernel
                 this._yaml_loader.load(config);
             }
         });
+    }
 
-        this._setPathParameters();
-
+    _loadAnnotations () {
         Object.keys(this._container.$.definitions).forEach(key => {
             let d = this._container.$.definitions[key];
             this._annotation_parser.parse(d.$.class_function);
         });
-
     }
 
     _setPathParameters ()
@@ -160,7 +143,7 @@ class Kernel
 
     getContainerLoader ()
     {
-        return new YamlFileLoader(this); //this._yaml_loader;
+        return this._yaml_loader;
     }
 
     getConfig ()
@@ -189,9 +172,9 @@ class Kernel
 
     findBundleByService (service)
     {
-        let c          = this.getContainer().get(service);
-        let bundles    = Object.values(require.cache).filter(m => m.exports.toString() === c.constructor.toString());
-        let bundle     = extract(bundles.map(b => b.filename.split(path.sep).reverse().filter(p => p.indexOf('Bundle') !== -1)));
+        let c       = this.getContainer().get(service);
+        let bundles = Object.values(require.cache).filter(m => m.exports.toString() === c.constructor.toString());
+        let bundle  = extract(bundles.map(b => b.filename.split(path.sep).reverse().filter(p => p.indexOf('Bundle') !== -1)));
 
         return this.getBundle(bundle);
     }

@@ -1,13 +1,21 @@
 const iterator   = require('../Helper/iterator'),
       parameters = require('get-parameter-names');
 
-const InvalidArgumentException = require('../Exception/InvalidArgumentException');
+const InvalidArgumentException = require('../Exception/InvalidArgumentException'),
+      NotFoundHttpException    = require('../Exception/NotFoundHttpException'),
+      LogicException           = require('../Exception/LogicException');
 
 class Route
 {
-    constructor (data)
+    constructor (container)
     {
+        this._container = container;
+        this._routes    = {};
+        this._services  = {};
+    }
 
+    compile (data)
+    {
         this.path = undefined;
 
         if (typeof data.value !== 'undefined') {
@@ -15,30 +23,53 @@ class Route
             delete data['value'];
         }
 
-        this._metadata = data._metadata;
-        this._kernel   = data._kernel;
-
-        delete data['_metadata'];
-        delete data['_kernel'];
-
-        for (let [key, value] of iterator(data)) {
-            this[key] = value;
+        if (data._metadata.method.indexOf('class ') === 0) {
+            this._services[data._metadata.service]          = {};
+            this._services[data._metadata.service].prefix   = data.path;
+            this._services[data._metadata.service].hostname = data.hostname;
+            return;
         }
 
-        this._kernel.getHttpKernel().addRoute(this);
+        let service = this._services[data._metadata.service];
+
+        service = service || {};
+        if (typeof this._routes[service.hostname || '*'] === 'undefined') {
+            this._routes[service.hostname || '*'] = {};
+        }
+
+        if (data.path.charAt(0) !== '/') {
+            data.path = '/' + data.path;
+        }
+
+        if (typeof service.prefix !== 'undefined') {
+            if (service.prefix.charAt(0) !== '/') {
+                service.prefix = '/' + service.prefix;
+            }
+            data.path = service.prefix + data.path;
+        }
+
+        if (typeof this._routes[service.hostname || '*'][data.path] !== 'undefined') {
+            let current = this._routes[service.hostname || '*'][data.path];
+            throw new LogicException(`Trying to register two routes with the same url ${service.hostname + ' ' || ' '}"${data.path}"`);
+        }
+
+        this._routes[service.hostname || '*'][data.path]         = {};
+        this._routes[service.hostname || '*'][data.path].service = data._metadata.service;
+        this._routes[service.hostname || '*'][data.path].class   = data._metadata.class;
+        this._routes[service.hostname || '*'][data.path].method  = data._metadata.method;
     }
 
-    accepts (request)
+    _accepts (request, route)
     {
         let url = request.url;
 
         // exact match
-        if (url === this.path) {
+        if (url === route) {
             return true;
         }
 
         let url_chunks  = url.split('/');
-        let path_chunks = this.path.split('/');
+        let path_chunks = route.split('/');
 
         while (url_chunks.length) {
             let url_chunk  = url_chunks.shift();
@@ -60,16 +91,31 @@ class Route
 
     async handle (request)
     {
-        let c      = this._kernel.getContainer().get(this._metadata.class);
+        let host = request.headers.host.substr(0, request.headers.host.indexOf(':'));
 
-        let method = c[this._metadata.method].bind(c);
+        if (typeof this._routes[host] === 'undefined') {
+            host = '*';
+        }
 
-        let args = this._findParameters(method, request);
+        for (let route in this._routes[host]) {
+            if (!this._routes[host].hasOwnProperty(route)) {
+                continue;
+            }
+            let router = this._routes[host][route];
+            let method = router.method;
 
-        return await method(...args);
+            if (this._accepts(request, route, host)) {
+                let c    = this._container.get(router.service);
+                let func = c[router.method];
+                let args = this._findParameters(func, request, route);
+                return await func.apply(c, args);
+            }
+        }
+
+        throw new NotFoundHttpException(`${request.url} does not match any route`, 404);
     }
 
-    _findParameters (method, request)
+    _findParameters (method, request, route)
     {
         let url = request.url;
 
@@ -79,7 +125,7 @@ class Route
         args[args.indexOf('request')] = request;
 
         let url_chunks  = url.split('/');
-        let path_chunks = this.path.split('/');
+        let path_chunks = route.split('/');
 
         while (url_chunks.length) {
             let url_chunk  = url_chunks.shift().trim();
@@ -102,7 +148,6 @@ class Route
 
         return args;
     }
-
 
     _isVariable (part)
     {

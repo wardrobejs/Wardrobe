@@ -1,11 +1,15 @@
 module.exports = (data) => {
 
-    if(typeof data === 'string') {
+    if (!data || typeof data === 'undefined') {
+        return;
+    }
+
+    if (typeof data === 'string') {
         return data;
     }
 
-    if(data.constructor.name === 'Array') {
-        if(data.length > 0) {
+    if (data.constructor.name === 'Array') {
+        if (data.length > 0) {
             return module.exports(data[0]);
         }
     }

@@ -13,3 +13,7 @@ services:
         tags: ['swig.extension']
         arguments:
             - '@container'
+
+    swig.annotation:
+        class: !require '@SwigBundle://Annotation/Swig'
+        tags: ['annotation']
