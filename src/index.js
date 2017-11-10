@@ -8,7 +8,8 @@ module.exports = {
     Controller: require('./Wardrobe/Controller'),
 
     // Internal Bundles
-    SwigBundle: require('./SwigBundle/SwigBundle'),
+    SwigBundle:  require('./SwigBundle/SwigBundle'),
+    AssetBundle: require('./AssetBundle/AssetBundle'),
 
     // Abstractions and Interfaces
     Swig: {

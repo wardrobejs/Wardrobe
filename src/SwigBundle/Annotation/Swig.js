@@ -1,5 +1,3 @@
-const extract = require('../../Wardrobe/Helper/extract');
-
 const NotFoundHttpException = require('../../Wardrobe/Exception/NotFoundHttpException');
 
 class Swig
@@ -11,38 +9,50 @@ class Swig
             delete data['value'];
         }
 
-        let c = data._kernel.getContainer().get(data._metadata.class);
-        let s = data._kernel.getContainer().get('swig');
-        let a = data._kernel.getContainer().get('asset_manager');
+        this._kernel = data._kernel;
+        this._swig   = this._kernel.getContainer().get('swig');
+        let _class   = this._kernel.getContainer().get(data._metadata.class);
 
-        let bundles = Object.values(require.cache).filter(m => m.exports.toString() === c.constructor.toString())
-            .map(b => b.filename.split(path.sep).reverse().filter(p => p.indexOf('Bundle') !== -1));
+        const template = this._resolve(data);
 
-        if (!data.template && bundles.length) {
-            let bundle = extract(bundles);
-            let controller = c.constructor.name.replace('Controller', '').toLowerCase();
+        let methodBody                = _class[data._metadata.method];
+        _class[data._metadata.method] = () => {
+            if (typeof template === 'undefined') {
+                throw new NotFoundHttpException(`Unable to find '${data.template}' for rendering`);
+            }
+
+            let parameters = methodBody.bind(_class)();
+
+            if (typeof parameters !== 'object') {
+                throw new Error(`Invalid type returned from ${_class.constructor.name}.${data._metadata.method}(). Exptected an 'object', but received '${typeof parameters}' instead`);
+            }
+
+            return this._swig.render(template, parameters);
+        };
+    }
+
+    _resolve (data)
+    {
+        let _bundle = this._kernel.findBundleByService(data._metadata.class);
+        let _class  = this._kernel.getContainer().get(data._metadata.class);
+
+        if (!data.template) {
+            let controller = _class.constructor.name.replace('Controller', '').toLowerCase();
             let action     = data._metadata.method.replace('Action', '').toLowerCase();
-            data.template = `@${bundle}://Resources/views/${controller}/${action}.html.twig`;
+
+            data.template = path.join(_bundle.path, 'Resources', 'views', controller, `${action}.html.twig`);
         }
 
-        const asset = a.resolve(data.template);
-
-        let methodBody = c[data._metadata.method];
-
-        c[data._metadata.method] = () => {
-
-            if(typeof asset === 'undefined') {
-                throw new NotFoundHttpException(`Unable to find '${data.template}' for rendering`)
-            }
-
-            let bodyValue = methodBody.bind(c)();
-
-            if(typeof bodyValue !== 'object') {
-                throw new Error(`Invalid type returned from ${c.constructor.name}.${data._metadata.method}(). Exptected an 'object', but received '${typeof bodyValue}' instead`);
-            }
-
-            return s.render(asset.file, bodyValue);
+        let matches = data.template.match(/@(.+):\/\/(.*)/);
+        if (matches) {
+            let name      = matches[1];
+            let dir       = matches[2];
+            data.template = path.join(this._kernel.getBundle(name).path, dir);
+        } else {
+            data.template = path.join(_bundle.path, 'Resources', 'views', data.template);
         }
+
+        return data.template;
     }
 }
 

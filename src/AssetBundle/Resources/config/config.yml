@@ -1,0 +1,12 @@
+services:
+
+    asset_manager:
+        class: !require '@AssetBundle://Asset/AssetManager'
+        arguments:
+            - '@kernel'
+
+    swig.extension.asset:
+        class: !require '@AssetBundle://Swig/AssetExtension'
+        tags: ['swig.extension']
+        arguments:
+            - '@asset_manager'

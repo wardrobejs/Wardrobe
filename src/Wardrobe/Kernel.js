@@ -1,11 +1,11 @@
-const DI         = require('apex-di'),
-      search     = require('./Helper/search'),
-      http       = require('http'),
-      https      = require('https');
+const DI      = require('apex-di'),
+      search  = require('./Helper/search'),
+      extract = require('./Helper/extract'),
+      http    = require('http'),
+      https   = require('https');
 
 const ContainerAware   = require('./Compiler/ContainerAware'),
       Route            = require('./Annotation/Route'),
-      AssetManager     = require('./Asset/AssetManager'),
       HttpKernel       = require('./HttpKernel'),
       AnnotationParser = require('./AnnotationParser');
 
@@ -77,7 +77,6 @@ class Kernel
     _addDefinitions ()
     {
         this._container.setDefinition('http_kernel', new DI.Definition(HttpKernel, [this]));
-        this._container.setDefinition('asset_manager', new DI.Definition(AssetManager, [this]));
 
         this._container.setDefinition('container', new DI.Definition(
             function (container) {
@@ -182,6 +181,15 @@ class Kernel
         }
 
         return this._bundles[name];
+    }
+
+    findBundleByService (service)
+    {
+        let c          = this.getContainer().get(service);
+        let bundles    = Object.values(require.cache).filter(m => m.exports.toString() === c.constructor.toString());
+        let bundle     = extract(bundles.map(b => b.filename.split(path.sep).reverse().filter(p => p.indexOf('Bundle') !== -1)));
+
+        return this.getBundle(bundle);
     }
 
     registerContainerConfiguration ()

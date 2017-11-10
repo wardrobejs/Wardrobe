@@ -1,25 +1,14 @@
-const SwigExtension = require('./SwigExtension')
+const SwigExtension = require('../../index').Swig.SwigExtension;
 
-class DefaultExtension extends SwigExtension
+/**
+ * Provides the asset(path) function to swig templates
+ */
+class AssetExtension extends SwigExtension
 {
     constructor (asset_manager)
     {
         super();
         this._asset_manager = asset_manager;
-    }
-
-    getFilters ()
-    {
-        return {
-
-        };
-    }
-
-    getTokenParsers ()
-    {
-        return [
-
-        ];
     }
 
     getFunctions ()
@@ -37,4 +26,4 @@ class DefaultExtension extends SwigExtension
 
 }
 
-module.exports = DefaultExtension;
+module.exports = AssetExtension;

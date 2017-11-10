@@ -1,4 +1,5 @@
 const NotFoundHttpException = require('./Exception/NotFoundHttpException');
+const extract               = require('./Helper/extract');
 
 class Controller
 {
@@ -9,8 +10,7 @@ class Controller
 
     setContainer (container)
     {
-        this._container     = container;
-        this._asset_manager = this._container.get('asset_manager');
+        this._container = container;
     }
 
     getContainer ()
@@ -20,13 +20,37 @@ class Controller
 
     render (template, parameters)
     {
-        const asset = this._asset_manager.resolve(template);
+        let file = this._resolve(template);
 
-        if (!asset) {
+        if (!file) {
             throw new NotFoundHttpException(`Unable to find ${template} for rendering`);
         }
 
-        return this._swig.render(asset.file, parameters);
+        if (!this._swig) {
+            return fs.readFileSync(file);
+        }
+
+        return this._swig.render(file, parameters);
+    }
+
+    _resolve (template)
+    {
+        let kenel = this.getContainer().get('kernel');
+
+        let name;
+        let matches = template.match(/@(.+):\/\/(.*)/);
+        if (matches) {
+            name     = kenel.getBundle(matches[1]).path;
+            template = matches[2];
+        } else {
+            let bundles  = Object.values(require.cache).filter(m => m.exports.toString() === this.constructor.toString());
+            let bundle   = extract(bundles.map(b => b.filename.split(path.sep).reverse().filter(p => p.indexOf('Bundle') !== -1)));
+            name = kenel.getBundle(bundle).path;
+        }
+
+        template = path.join(name, 'Resources', 'views', template);
+
+        return template;
     }
 
 }

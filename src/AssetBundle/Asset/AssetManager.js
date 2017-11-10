@@ -1,5 +1,3 @@
-const NotFoundHttpException = require('../../Wardrobe/Exception/NotFoundHttpException');
-
 const Asset = require('./Asset');
 
 class AssetManager

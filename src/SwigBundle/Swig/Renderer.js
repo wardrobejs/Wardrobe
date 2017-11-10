@@ -70,6 +70,9 @@ class Renderer
 
     render (source, options)
     {
+        if(!fs.existsSync(source)) {
+            throw new Error(`File not found ${source}`)
+        }
         return swig.compileFile(source, this.swigOpts)(options);
     }
 
