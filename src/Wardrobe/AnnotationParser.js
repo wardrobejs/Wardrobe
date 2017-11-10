@@ -24,7 +24,7 @@ class AnnotationParser
             }
         }
 
-        let match, regexp = /\/\*{2}([\s\S]+?)\*\/[\s\S]+?([A-Za-z0-9\_]+)/g;
+        let match, regexp = /\/\*{2}([\s\S]+?)\*\/[\s\S]+?([A-Za-z0-9_ ]+)/g;
         while (match = regexp.exec(source)) {
             if (typeof match[1] !== 'string' || typeof match[2] !== 'string') {
                 continue;
@@ -39,7 +39,7 @@ class AnnotationParser
                 data._kernel   = this._kernel;
                 data._metadata = {
                     class:  className,
-                    method: match[2]
+                    method: match[2].replace('async', '').trim()
                 };
 
                 let resolvedClass = this.resolve(tag.title);

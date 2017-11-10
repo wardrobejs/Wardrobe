@@ -10,7 +10,7 @@ class HttpKernel
     }
 
 
-    handle (request, response)
+    async handle (request, response)
     {
         let static_file = path.join(this._kernel.getContainer().getParameter('project_dir'), 'web', request.url);
         if (fs.existsSync(static_file) && !fs.lstatSync(static_file).isDirectory()) {
@@ -25,7 +25,7 @@ class HttpKernel
 
         try {
 
-            let handler = this._realHandler(request, response);
+            let handler = await this._realHandler(request, response);
             if (typeof handler !== 'string' && !(handler instanceof Buffer)) {
                 handler = JSON.stringify(handler);
             }
@@ -44,7 +44,7 @@ class HttpKernel
         }
     }
 
-    _realHandler (request, response)
+    async _realHandler (request, response)
     {
         let parameters     = request.url.split('?');
         request.url        = parameters.shift();
@@ -62,7 +62,7 @@ class HttpKernel
 
         for (let route of this._routes) {
             if (route.accepts(request)) {
-                return route.handle(request);
+                return await route.handle(request);
             }
         }
 
