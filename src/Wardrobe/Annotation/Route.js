@@ -62,19 +62,11 @@ class Route
     {
         let c      = this._kernel.getContainer().get(this._metadata.class);
 
-        console.log(c, this._metadata.method);
-
         let method = c[this._metadata.method].bind(c);
 
         let args = this._findParameters(method, request);
 
-        let result = method(...args);
-
-        if(result instanceof Promise) {
-            result = await result;
-        }
-
-        return result;
+        return await method(...args);
     }
 
     _findParameters (method, request)
