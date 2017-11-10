@@ -1,3 +1,5 @@
+const parameters = require('get-parameter-names');
+
 const NotFoundHttpException = require('../../Wardrobe/Exception/NotFoundHttpException');
 
 class Swig
@@ -10,25 +12,34 @@ class Swig
         }
 
         this._kernel = data._kernel;
-        this._swig   = this._kernel.getContainer().get('swig');
+        let _swig    = this._kernel.getContainer().get('swig');
         let _class   = this._kernel.getContainer().get(data._metadata.service);
 
         const template = this._resolve(data);
 
-        let methodBody                = _class[data._metadata.method];
-        _class[data._metadata.method] = () => {
+        let methodBody = _class[data._metadata.method];
+        let params     = parameters(methodBody);
+
+
+        eval(`_class[data._metadata.method] = async (${params.join(', ')}) => {
+            
             if (typeof template === 'undefined') {
-                throw new NotFoundHttpException(`Unable to find '${data.template}' for rendering`);
+                throw new NotFoundHttpException('Unable to find "' + data.template + '" for rendering');
             }
 
-            let parameters = methodBody.bind(_class)();
+            let parameters = await methodBody.apply(_class, [${params.join(', ')}]);
 
             if (typeof parameters !== 'object') {
-                throw new Error(`Invalid type returned from ${_class.constructor.name}.${data._metadata.method}(). Exptected an 'object', but received '${typeof parameters}' instead`);
+                throw new Error('Invalid type returned from ' + _class.constructor.name);
             }
 
-            return this._swig.render(template, parameters);
-        };
+            return _swig.render(template, parameters);
+        };`);
+
+        Object.defineProperty(_class[data._metadata.method], 'name', {
+            writable: false,
+            value: data._metadata.method
+        });
     }
 
     _resolve (data)
