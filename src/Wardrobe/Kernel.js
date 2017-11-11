@@ -1,4 +1,6 @@
 const DI      = require('apex-di'),
+      search  = require('./Helper/search'),
+      extract = require('./Helper/extract'),
       http    = require('http'),
       https   = require('https'),
       Module  = require('module');
@@ -22,19 +24,17 @@ class Kernel
 
         this._environment = environment;
         this._debug       = debug;
+
         this._container   = new DI.Container();
-        this._bundles     = {};
-        this._config      = {};
         this._yaml_loader = new YamlFileLoader(this);
 
+        this._bundles = {};
+        this._config  = {};
+
         this._initializeBundles();
-
         this._initializeContainer();
-
         this._addDefinitions();
-
         this._setPathParameters();
-
     }
 
     _interceptRequire ()
@@ -150,6 +150,11 @@ class Kernel
     getConfig ()
     {
         return this._config;
+    }
+
+    getEnvironment ()
+    {
+        return this._environment;
     }
 
     registerBundles ()

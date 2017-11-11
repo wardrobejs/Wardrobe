@@ -4,6 +4,10 @@ const NotFoundHttpException = require('../../Wardrobe/Exception/NotFoundHttpExce
 
 class Swig
 {
+    constructor (kernel) {
+        this._kernel = kernel;
+    }
+
     compile (data)
     {
         if (typeof data.value !== 'undefined') {
@@ -11,7 +15,6 @@ class Swig
             delete data['value'];
         }
 
-        this._kernel = data._kernel;
         let _swig    = this._kernel.getContainer().get('swig');
         let _class   = this._kernel.getContainer().get(data._metadata.service);
 

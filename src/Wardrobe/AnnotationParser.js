@@ -42,7 +42,6 @@ class AnnotationParser
             tags.forEach(tag => {
 
                 let data       = this._dataBuilder(tag.description);
-                data._kernel   = this._kernel;
                 data._metadata = {
                     service: service,
                     class:   className,

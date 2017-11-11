@@ -17,3 +17,5 @@ services:
     swig.annotation:
         class: !require '@SwigBundle://Annotation/Swig'
         tags: ['annotation']
+        arguments:
+            - '@kernel'
