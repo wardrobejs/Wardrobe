@@ -73,7 +73,7 @@ class CustomYamlLoader extends DI.YamlLoader
                             file += '.js';
                             if (!fs.existsSync(file)) {
 
-                                throw new Error('Cannot find module "' + data + '".');
+                                throw e;
                             }
                         }
                         return require(file);
