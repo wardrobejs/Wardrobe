@@ -22,21 +22,18 @@ class Kernel
     {
         this._interceptRequire();
 
-        this._environment       = environment;
-        this._debug             = debug;
-        this._container         = new DI.Container();
-        this._bundles           = {};
-        this._config            = {};
-        this._annotation_parser = new AnnotationParser(this);
-        this._yaml_loader       = new YamlFileLoader(this);
+        this._environment = environment;
+        this._debug       = debug;
+        this._container   = new DI.Container();
+        this._bundles     = {};
+        this._config      = {};
+        this._yaml_loader = new YamlFileLoader(this);
 
         this._initializeBundles();
 
         this._initializeContainer();
 
         this._addDefinitions();
-
-        // this._loadAnnotations();
 
         this._setPathParameters();
 
@@ -48,12 +45,13 @@ class Kernel
         const annotated          = {};
 
         const f = (module) => {
-            if (typeof annotated[module.id] === 'undefined') {
-                annotated[module.id] = true;
-                setTimeout(() => {
+            setTimeout(() => { // do this async
+                if (!module.annotated) {
                     _annotation_parser.parse(module.exports);
-                }, 0);
-            }
+                    module.annotated = true;
+                    module.children.forEach(child => f(child));
+                }
+            }, 0);
         };
 
         const originalRequire    = Module.prototype.require;
