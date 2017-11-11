@@ -61,9 +61,6 @@ class Kernel
                 annotated[m.id] = true;
             }
         });
-
-        // listen on require event
-
     }
 
     _initializeBundles ()
