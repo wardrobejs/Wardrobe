@@ -13,20 +13,12 @@ class AnnotationParser
         this._compilers = {};
     }
 
-    parse (instance)
+    parse (module)
     {
-        if (!instance) {
-            return;
-        }
-
-        let file = Object.values(require.cache).filter(m => m.exports.toString() === instance.toString()).first();
-        if (!file) {
-            return;
-        }
-
-        file = file.filename;
-
+        let file = module.filename;
         let source = fs.readFileSync(file).toString();
+
+        let instance = module.exports;
 
         let service   = instance.name;
         let className = instance.name;

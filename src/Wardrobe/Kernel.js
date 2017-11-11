@@ -47,7 +47,7 @@ class Kernel
         const f = (module) => {
             setTimeout(() => { // do this async
                 if (!module.annotated) {
-                    _annotation_parser.parse(module.exports);
+                    _annotation_parser.parse(module);
                     module.annotated = true;
                     module.children.forEach(child => f(child));
                 }
@@ -131,13 +131,7 @@ class Kernel
             return;
         }
 
-        http.createServer(this._handle.bind(this)).listen(port);
-
-    }
-
-    _handle (request, response)
-    {
-        this.getHttpKernel().handle(request, response);
+        http.createServer(this.getHttpKernel().handle.bind(this.getHttpKernel())).listen(port);
     }
 
     getHttpKernel ()
