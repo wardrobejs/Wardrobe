@@ -1,3 +1,6 @@
+passes:
+    - !require '../Compiler/ContainerAware'
+
 services:
     http_kernel:
         class: !require '../HttpKernel'

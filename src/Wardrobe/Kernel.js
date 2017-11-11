@@ -2,14 +2,11 @@ const DI      = require('apex-di'),
       search  = require('./Helper/search'),
       extract = require('./Helper/extract'),
       http    = require('http'),
-      https   = require('https');
+      https   = require('https'),
+      Module  = require('module');
 
-const ContainerAware   = require('./Compiler/ContainerAware'),
-      Route            = require('./Annotation/Route'),
-      HttpKernel       = require('./HttpKernel'),
-      AnnotationParser = require('./AnnotationParser');
-
-const YamlFileLoader                = require('./Loader/YamlFileLoader'),
+const AnnotationParser              = require('./AnnotationParser'),
+      YamlFileLoader                = require('./Loader/YamlFileLoader'),
       MethodNotImplementedException = require('./Exception/MethodNotImplementedException'),
       LogicException                = require('./Exception/LogicException'),
       InvalidArgumentException      = require('./Exception/InvalidArgumentException');
@@ -23,6 +20,8 @@ class Kernel
 
     constructor (environment, debug)
     {
+        this._interceptRequire();
+
         this._environment       = environment;
         this._debug             = debug;
         this._container         = new DI.Container();
@@ -37,10 +36,31 @@ class Kernel
 
         this._addDefinitions();
 
-        this._loadAnnotations();
+        // this._loadAnnotations();
 
         this._setPathParameters();
 
+    }
+
+    _interceptRequire ()
+    {
+        const _annotation_parser = new AnnotationParser(this);
+        const annotated          = {};
+
+        const f = (module) => {
+            if (typeof annotated[module.id] === 'undefined') {
+                annotated[module.id] = true;
+                setTimeout(() => {
+                    _annotation_parser.parse(module.exports);
+                }, 0);
+            }
+        };
+
+        const originalRequire    = Module.prototype.require;
+        Module.prototype.require = function () {
+            f(this);
+            return originalRequire.apply(this, arguments);
+        };
     }
 
     _initializeBundles ()
@@ -83,8 +103,6 @@ class Kernel
         this.getContainerLoader().load(path.join(__dirname, 'config', 'services.yml'));
         this.registerContainerConfiguration(this.getContainerLoader());
 
-        this._container.addCompilerPass(ContainerAware);
-
         // Load all bundles
         Object.keys(this._bundles).forEach((name) => {
             let bundle = this._bundles[name];
@@ -92,13 +110,6 @@ class Kernel
             if (fs.existsSync(config)) {
                 this._yaml_loader.load(config);
             }
-        });
-    }
-
-    _loadAnnotations () {
-        Object.keys(this._container.$.definitions).forEach(key => {
-            let d = this._container.$.definitions[key];
-            this._annotation_parser.parse(d.$.class_function);
         });
     }
 
