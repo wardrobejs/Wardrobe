@@ -1,6 +1,4 @@
 const DI      = require('apex-di'),
-      search  = require('./Helper/search'),
-      extract = require('./Helper/extract'),
       http    = require('http'),
       https   = require('https'),
       Module  = require('module');
