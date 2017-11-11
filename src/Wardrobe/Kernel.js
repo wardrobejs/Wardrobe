@@ -1,9 +1,9 @@
-const DI      = require('apex-di'),
-      search  = require('./Helper/search'),
-      extract = require('./Helper/extract'),
-      http    = require('http'),
-      https   = require('https'),
-      Module  = require('module');
+const wrequire = require('./Helper/wrequire'),
+      DI       = require('apex-di'),
+      search   = require('./Helper/search'),
+      extract  = require('./Helper/extract'),
+      http     = require('http'),
+      https    = require('https');
 
 const AnnotationParser              = require('./AnnotationParser'),
       YamlFileLoader                = require('./Loader/YamlFileLoader'),
@@ -35,6 +35,9 @@ class Kernel
         this._initializeContainer();
         this._addDefinitions();
         this._setPathParameters();
+
+        // Load user config (overriding existing)
+        this.registerContainerConfiguration(this.getContainerLoader());
     }
 
     _interceptRequire ()
@@ -42,21 +45,25 @@ class Kernel
         const _annotation_parser = new AnnotationParser(this);
         const annotated          = {};
 
-        const parseAnnotations = (module) => {
+        const parseAnnotations = (_module) => {
             setTimeout(() => { // do this async
-                if (!module.annotated) {
-                    _annotation_parser.parse(module);
-                    module.annotated = true;
-                    module.children.forEach(child => parseAnnotations(child));
+                if (!_module.annotated) {
+                    _annotation_parser.parse(_module);
+                    _module.annotated = true;
+                    _module.children.forEach(child => parseAnnotations(child));
                 }
             }, 0);
         };
 
-        const originalRequire    = Module.prototype.require;
-        Module.prototype.require = function () {
-            parseAnnotations(this);
-            return originalRequire.apply(this, arguments);
-        };
+        wrequire.on('load', (m) => {
+            if (typeof annotated[m.id] === 'undefined') {
+                parseAnnotations(m);
+                annotated[m.id] = true;
+            }
+        });
+
+        // listen on require event
+
     }
 
     _initializeBundles ()
@@ -96,8 +103,7 @@ class Kernel
     _initializeContainer ()
     {
         // Load configuration files
-        this.getContainerLoader().load(path.join(__dirname, 'config', 'services.yml'));
-        this.registerContainerConfiguration(this.getContainerLoader());
+        this.getContainerLoader().load(path.join(__dirname, 'Resources', 'config', 'config.yml'));
 
         // Load all bundles
         Object.keys(this._bundles).forEach((name) => {

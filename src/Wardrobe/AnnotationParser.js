@@ -1,8 +1,6 @@
-const doctrine = require('doctrine'),
-      extract  = require('./Helper/extract');
+const doctrine = require('doctrine');
 
-const InvalidArgumentException = require('./Exception/InvalidArgumentException'),
-      MethodNotImplementedException = require('./Exception/MethodNotImplementedException');
+const MethodNotImplementedException = require('./Exception/MethodNotImplementedException');
 
 class AnnotationParser
 {
@@ -10,17 +8,16 @@ class AnnotationParser
     constructor (kernel)
     {
         this._kernel    = kernel;
-        this._compilers = {};
     }
 
-    parse (module)
+    parse (_module)
     {
-        let file = module.filename;
+        let file   = _module.filename;
         let source = fs.readFileSync(file).toString();
 
-        let instance = module.exports;
+        let instance = _module.exports;
 
-        let service   = instance.name;
+        let service   = undefined;
         let className = instance.name;
 
         for (let name of Object.keys(this._kernel._container.$.definitions)) {
@@ -41,7 +38,7 @@ class AnnotationParser
 
             tags.forEach(tag => {
 
-                let data       = this._dataBuilder(tag.description);
+                let data       = this.parseDescription(tag.description);
                 data._metadata = {
                     service: service,
                     class:   className,
@@ -49,17 +46,16 @@ class AnnotationParser
                 };
 
                 let resolvedClass = this.resolve(tag.title);
-                if(typeof resolvedClass.compile === 'undefined') {
+                if (typeof resolvedClass.compile === 'undefined') {
                     throw new MethodNotImplementedException(`${tag.title} does not implement compile(data)`);
                 }
 
-                resolvedClass.compile(data);
-
+                resolvedClass.compile(data, _module);
             });
         }
     }
 
-    _dataBuilder (description)
+    parseDescription (description)
     {
         if (!description) {
             return {};
@@ -71,25 +67,38 @@ class AnnotationParser
         for (let chunk of chunks) {
             chunk = chunk.trim();
 
+            let value, key = 'value';
             // grab the value
-            let match = chunk.match(/(["'])(?:(?=(\\?))\2.)*?\1/);
-            if (!match) {
-                return {};
+            if (chunk.indexOf('=') === -1) {
+                value = this.getValue(chunk);
+            } else {
+                value = this.getValue(chunk.substr(chunk.indexOf('=') + 1)); // foei!
+                key   = chunk.substr(0, chunk.indexOf('='));
             }
 
-            match = match[0];
-
-            let value = match.substr(1, match.length - 2);
-
-            let key = chunk.replace(match, '');
-            key     = key.substr(0, key.length - 1).trim();
-            if (!key.length) {
-                key = 'value';
-            }
             data[key] = value;
         }
 
         return data;
+    }
+
+    getValue (data)
+    {
+        // number or float
+        if (!isNaN(parseInt(data))) {
+            if (data.indexOf('.')) {
+                return parseFloat(data);
+            }
+            return parseInt(data);
+        }
+
+        // boolean
+        if (data === 'true' || data === 'false') {
+            return data === 'true';
+        }
+
+        // string
+        return data.trim('"');
     }
 
     get compilers ()

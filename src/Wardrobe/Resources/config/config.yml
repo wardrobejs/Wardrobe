@@ -1,0 +1,20 @@
+passes:
+    - !require '../../Compiler/ContainerAware'
+
+services:
+    http_kernel:
+        class: !require '../../HttpKernel'
+        arguments:
+            - '@kernel'
+            - '@route'
+
+    config:
+        class: !require '../../Config'
+        arguments:
+            - '@kernel'
+
+    route:
+        class: !require '../../Annotation/Route'
+        tags: ['annotation']
+        arguments:
+            - '@container'

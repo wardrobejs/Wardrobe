@@ -4,9 +4,7 @@ class HttpKernel
     {
         this._kernel = kernel;
         this._route  = route;
-        this._static = {};
     }
-
 
     async handle (request, response)
     {
@@ -42,7 +40,7 @@ class HttpKernel
         }
     }
 
-    async _realHandler (request, response)
+    async _realHandler (request)
     {
         let parameters     = request.url.split('?');
         request.url        = parameters.shift();
@@ -57,21 +55,7 @@ class HttpKernel
             request.parameters[key] = KvP.join('=');
         }
 
-        // used for {{ asset() }}
-        let asset = this._static[request.url];
-        if (typeof asset !== 'undefined') {
-            response.setHeader('content-type', asset.type);
-            return asset.getBuffer();
-        }
-
         return await this._route.handle(request);
-    }
-
-    addAsset (asset)
-    {
-        if (typeof this._static[asset.getPublic()] === 'undefined') {
-            this._static[asset.getPublic()] = asset;
-        }
     }
 
 }

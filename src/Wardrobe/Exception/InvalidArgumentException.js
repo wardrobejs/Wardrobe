@@ -1,8 +1,11 @@
 class InvalidArgumentException extends Error
 {
-    constructor (message, id)
+    constructor (got, expected = undefined)
     {
-        super(message, id);
+        if(typeof expected === 'undefined') {
+            return super(got);
+        }
+        super(`Invalid argument supplied, expected ${expected} but got ${got}`);
     }
 }
 

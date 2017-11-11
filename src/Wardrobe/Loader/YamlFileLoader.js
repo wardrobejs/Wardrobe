@@ -1,5 +1,6 @@
-const DI   = require('apex-di');
-const YAML = require('js-yaml');
+const DI        = require('apex-di');
+const YAML      = require('js-yaml');
+const deepMerge = require('../Helper/DeepMerge');
 
 class CustomYamlLoader extends DI.YamlLoader
 {
@@ -44,10 +45,7 @@ class CustomYamlLoader extends DI.YamlLoader
 
         super._parse(container, path_info, data);
 
-        if (typeof data.framework !== 'undefined') {
-            this._kernel._config = data.framework;
-            Object.freeze(this._kernel._config);
-        }
+        this._kernel._config = deepMerge(this._kernel._config, data);
     }
 
     /**
