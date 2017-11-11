@@ -44,19 +44,19 @@ class Kernel
         const _annotation_parser = new AnnotationParser(this);
         const annotated          = {};
 
-        const f = (module) => {
+        const parseAnnotations = (module) => {
             setTimeout(() => { // do this async
                 if (!module.annotated) {
                     _annotation_parser.parse(module);
                     module.annotated = true;
-                    module.children.forEach(child => f(child));
+                    module.children.forEach(child => parseAnnotations(child));
                 }
             }, 0);
         };
 
         const originalRequire    = Module.prototype.require;
         Module.prototype.require = function () {
-            f(this);
+            parseAnnotations(this);
             return originalRequire.apply(this, arguments);
         };
     }
