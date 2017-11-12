@@ -3,10 +3,11 @@ global.fs   = require('fs');
 
 module.exports = {
     // Core
-    Kernel:     require('./Wardrobe/Kernel'),
-    Bundle:     require('./Wardrobe/Bundle'),
-    Controller: require('./Wardrobe/Controller'),
-    DI:         require('apex-di'),
+    Kernel:           require('./Wardrobe/Kernel'),
+    Bundle:           require('./Wardrobe/Bundle'),
+    Controller:       require('./Wardrobe/Controller'),
+    DI:               require('apex-di'),
+    AnnotationParser: require('./Wardrobe/AnnotationParser'),
 };
 
 Array.prototype.first = function () {
@@ -26,6 +27,10 @@ Array.prototype.last = function () {
 
 String.prototype.ucfirst = function () {
     return this.charAt(0).toUpperCase() + this.substr(1);
+};
+
+String.prototype.lcfirst = function () {
+    return this.charAt(0).toLowerCase() + this.substr(1);
 };
 
 String.prototype.trim = function (characters) {
