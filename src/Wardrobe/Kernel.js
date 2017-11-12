@@ -20,7 +20,10 @@ class Kernel
 
     constructor (environment, debug)
     {
-        this._interceptRequire();
+        let appKernel = search(require.cache, 'filename', `${this.constructor.name}.js`).filename;
+
+        this._app_dir     = path.dirname(appKernel);
+        this._project_dir = path.dirname(this._app_dir);
 
         this._environment = environment;
         this._debug       = debug;
@@ -31,6 +34,7 @@ class Kernel
         this._bundles = {};
         this._config  = {};
 
+        this._interceptRequire();
         this._initializeBundles();
         this._initializeContainer();
         this._addDefinitions();
@@ -43,7 +47,6 @@ class Kernel
     _interceptRequire ()
     {
         const _annotation_parser = new AnnotationParser(this);
-        const annotated          = {};
 
         const parseAnnotations = (_module) => {
             setTimeout(() => { // do this async
@@ -56,10 +59,7 @@ class Kernel
         };
 
         wrequire.on('load', (m) => {
-            if (typeof annotated[m.id] === 'undefined') {
-                parseAnnotations(m);
-                annotated[m.id] = true;
-            }
+            parseAnnotations(m);
         });
     }
 
@@ -114,25 +114,28 @@ class Kernel
 
     _setPathParameters ()
     {
-        let appKernel = search(require.cache, 'filename', `${this.constructor.name}.js`).filename;
-
-        let app_dir     = path.dirname(appKernel);
-        let project_dir = path.dirname(app_dir);
-
-        this._container.setParameter('root_dir', app_dir);
-        this._container.setParameter('project_dir', project_dir);
+        this._container.setParameter('root_dir', this._app_dir);
+        this._container.setParameter('project_dir', this._project_dir);
     }
 
     listen (port, options)
     {
         options = options || {};
 
+        let started = (err) => {
+            if (err) {
+                logger.error(err);
+            }
+            let logger = this.getContainer().get('logger');
+            logger.log(`Server listening on ${port}`);
+        };
+
         if (typeof options['ssl'] !== 'undefined') {
-            https.createServer(options['ssl'], this._handle.bind(this)).listen(port);
+            https.createServer(options['ssl'], this._handle.bind(this)).listen(port, started);
             return;
         }
 
-        http.createServer(this.getHttpKernel().handle.bind(this.getHttpKernel())).listen(port);
+        http.createServer(this.getHttpKernel().handle.bind(this.getHttpKernel())).listen(port, started);
     }
 
     getHttpKernel ()

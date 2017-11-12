@@ -1,5 +1,5 @@
 global.path = require('path');
-global.fs   = require('fs');
+global.fs   = require('fs-extra');
 
 module.exports = {
     // Core
