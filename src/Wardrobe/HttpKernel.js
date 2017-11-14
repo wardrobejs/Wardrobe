@@ -1,4 +1,5 @@
 const moment = require('moment');
+const SessionHandler = require('./Session/SessionHandler');
 
 class HttpKernel
 {
@@ -7,10 +8,14 @@ class HttpKernel
         this._kernel = kernel;
         this._route  = route;
         this._logger = logger;
+
+        this._session_handler = new SessionHandler();
     }
 
     async handle (request, response)
     {
+        request.session = this._session_handler.getSession(request, response);
+
         request.protocol = typeof request.connection.encrypted !== 'undefined' ? 'https' : 'http';
         let static_file = path.join(this._kernel.getContainer().getParameter('project_dir'), 'web', request.url);
         if (fs.existsSync(static_file) && !fs.lstatSync(static_file).isDirectory()) {
@@ -20,9 +25,7 @@ class HttpKernel
             response.write(new Buffer(fs.readFileSync(static_file)));
             response.end();
         } else {
-
             try {
-
                 let handler = await this._realHandler(request, response);
                 if (typeof handler !== 'string' && !(handler instanceof Buffer)) {
                     handler = JSON.stringify(handler);
