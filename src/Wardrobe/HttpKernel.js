@@ -5,10 +5,10 @@ const Request = require('../HttpFoundation/Request');
 
 class HttpKernel
 {
-    constructor (kernel, route, logger)
+    constructor (kernel, router, logger)
     {
         this._kernel = kernel;
-        this._route  = route;
+        this._router = router;
         this._logger = logger;
 
         this._session_handler = new SessionHandler();
@@ -27,7 +27,7 @@ class HttpKernel
             response.write(new Buffer(fs.readFileSync(static_file)));
             response.end();
         } else {
-            try {
+            try { // todo: Response object!
                 let handler = await this._realHandler(request, response);
                 if (typeof handler !== 'string' && !(handler instanceof Buffer)) {
                     handler = JSON.stringify(handler);
@@ -67,7 +67,8 @@ class HttpKernel
             });
         });
 
-        return await this._route.handle(new Request(request));
+        // todo: middleware/post processing
+        return await this._router.route(new Request(request));
     }
 
 }

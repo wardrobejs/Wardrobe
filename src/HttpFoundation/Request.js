@@ -1,51 +1,28 @@
+const RequestBody  = require('./InputRequest');
 const ParameterBag = require('./ParameterBag');
 const FileBag      = require('./ParameterBag'); // todo: make FileBag
 const ServerBag    = require('./ParameterBag'); // todo: make ServerBag
 const HeaderBag    = require('./ParameterBag'); // todo: make HeaderBag
 
-const multipart = require('./MultipartParser');
-
 class Request
 {
     constructor (request)
     {
-        /** @deprecated */
-        this.legacy = request;
-
         let parameters = request.url.split('?');
         let url        = request.protocol + '://' + request.headers.host + parameters.shift();
         let query      = parameters.shift() || '';
 
-        let body = multipart.Parse(request.body, request.body.toString().split('\r\n')[0].trim('-'));
-
-        let files = {};
-        let fields = {};
-
-        for(let item of body) {
-            if(typeof item.filename !== 'undefined') {
-                if(typeof files[item.name] === 'undefined') {
-                    files[item.name] = [];
-                }
-                files[item.name].push({
-                    filename: item.filename,
-                    content: item.data,
-                    size: item.data.length,
-                });
-            } else {
-                fields[item.name] = item.data;
-            }
-        }
+        let input = new RequestBody(request);
 
         this.initialize(
-            this._parseParameters(query),
-            fields,
-            {}, // attributes
+            input.getQuery(),
+            input.getFields(),
+            new ParameterBag(),
             {}, // cookies
-            files,
-            {},
+            input.getFiles(),
+            this._parseServer(request),
             request.body
         );
-
     }
 
     /**
@@ -83,122 +60,76 @@ class Request
         this.format                 = null;
     }
 
-    _parseRequestBody (buffer, content_type)
+    _parseServer (request)
     {
-        if (buffer.length === 0 || typeof content_type === 'undefined') {
-            return undefined;
+        let server = request.headers.host.split(':');
+
+        let result = {};
+
+        // Object.keys(process.env).forEach(key => {
+        //     result[key] = process.env[key];
+        // });
+
+        let url = request.url.split('?');
+
+        result['SERVER_NAME']          = server[0];
+        result['SERVER_PORT']          = server[1];
+        result['SERVER_PROTOCOL']      = request.protocol.toUpperCase() + '/' + request.httpVersion;
+        result['HTTP_HOST']            = server[0];
+        result['HTTP_USER_AGENT']      = request.headers['user-agent'];
+        result['HTTP_ACCEPT']          = request.headers['accept'];
+        result['HTTP_ACCEPT_LANGUAGE'] = request.headers['accept-language'];
+        result['HTTP_ACCEPT_CHARSET']  = request.headers['accept-charset'];
+        result['HTTP_ACCEPT_ENCODING'] = request.headers['accept-encoding'];
+        result['REQUEST_TIME']         = Math.floor(new Date().getTime() / 1000);
+        result['REQUEST_METHOD']       = request.method.toUpperCase();
+        result['REQUEST_URI']          = url.shift() || '/';
+        result['QUERY_STRING']         = url.shift() || '';
+        result['REMOTE_ADDR']          = request.connection.remoteAddress.replace(/::ffff:/, '');
+        result['CONTENT_TYPE']         = request.headers['content-type'];
+
+        if (request.protocol === 'https') {
+            result['HTTPS'] = 'on';
         }
 
-        let str = buffer.toString();
-
-        let content_type_data = content_type.split(';');
-        content_type          = content_type_data.shift().trim().toLowerCase();
-        content_type_data     = content_type_data.join(';');
-
-        switch (content_type) {
-            case 'application/x-www-form-urlencoded':
-                return this._parseParameters(str);
-            case 'application/json':
-                try {
-                    return JSON.parse(str);
-                } catch (e) {
-                    throw new Error(`Body is not in JSON format`);
+        switch (request.method.toUpperCase()) {
+            case 'POST':
+            case 'PUT':
+            case 'DELETE':
+                if (typeof result['CONTENT_TYPE'] === 'undefined') {
+                    result['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
                 }
-            case 'multipart/form-data': // /^multipart\/(?:form-data|related)(?:;|$)/i:
-                return this._parseMultipart(buffer, content_type_data);
-            default:
-                return undefined;
+                break;
         }
+
+        const ordered = {};
+        Object.keys(result).sort().forEach(function (key) {
+            ordered[key] = result[key];
+        });
+
+        return ordered;
     }
 
-    _parseParameters (str, delim = '&')
+    getMethod ()
     {
-        str = str.trim('?');
-
-        let parameters = {};
-
-        let key, value;
-        for (let part of str.split(delim)) {
-            if (part.indexOf('=') === -1) {
-                key   = part.trim();
-                value = true;
-            } else {
-                let chunks = part.split('=', 2);
-                key        = chunks[0].trim();
-                value      = chunks[1].trim('"');
-            }
-            if (value === true) {
-                parameters['value'] = key;
-            } else {
-                parameters[key] = value;
-            }
-        }
-
-        return parameters;
+        return this.server.get('REQUEST_METHOD');
     }
 
-    /**
-     * @param {Buffer} data
-     * @param content_type_data
-     * @private
-     */
-    _parseMultipart (data, content_type_data)
+    getPathInfo ()
     {
-        if (!data instanceof Buffer) {
-            throw new Error(`data must be a Buffer`);
-        }
-
-        let delimiter = '\r\n';
-        let extra     = this._parseParameters(content_type_data.trim(), ';');
-        let boundary  = extra.boundary || data.toString().split('\r\n')[0].trim('-');
-
-        // A multipart can contain either properties or files
-        let body  = {};
-        let files = {};
-
-        let rough = data
-            .toString()
-            .split(boundary)
-            .map(l => l.split(delimiter + delimiter, 2).map(s => {
-                if (s.substr(-4) === '\r\n--') {
-                    return s.substr(0, s.length - 4);
-                }
-
-                return s;
-            }))
-            .filter(a => a.length === 2);
-
-        for (let d of rough) {
-            let headers = {};
-            d[0].trim().split(delimiter).map(s => {
-                let _                       = s.split(':');
-                headers[_[0].toLowerCase()] = this._parseParameters(_[1], ';');
-                return s;
-            });
-            let value = new Buffer(d[1]);
-
-            if (typeof headers['content-disposition'].filename === 'undefined') {
-                // normal
-                body[headers['content-disposition'].name] = d[1];
-            } else {
-                if(typeof files[headers['content-disposition'].name] === 'undefined') {
-                    files[headers['content-disposition'].name] = [];
-                }
-                files[headers['content-disposition'].name].push({
-                    name: headers['content-disposition'].filename,
-                    size: value.length,
-                    content: value,
-                    'content-type': headers['content-type'].value || 'text/plain'
-                });
-            }
-        }
-
-        return {
-            post: body,
-            files: files
-        }
+        return this.server.get('REQUEST_URI');
     }
 
+    getHost ()
+    {
+        return this.server.get('HTTP_HOST');
+    }
+
+    getClientIp ()
+    {
+        // todo: https://github.com/symfony/http-foundation/blob/master/Request.php#L767
+        return this.server.get('REMOTE_ADDR');
+    }
 
 }
 

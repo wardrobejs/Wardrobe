@@ -6,7 +6,7 @@ services:
         class: !require '../../HttpKernel'
         arguments:
             - '@kernel'
-            - '@route'
+            - '@router'
             - '@logger'
 
     config:
@@ -14,13 +14,24 @@ services:
         arguments:
             - '@kernel'
 
-    route:
-        class: !require '../../Annotation/Route'
-        tags: ['annotation']
-        arguments:
-            - '@container'
+    router:
+        class: !require '../../Routing/Router'
 
     logger:
         class: !require '../../Logger/Logger'
         arguments:
             - '@container'
+
+    core.annotation.route:
+        class: !require '../../Annotation/Route'
+        tags: ['annotation']
+        arguments:
+            - '@container'
+            - '@router'
+
+    core.annotation.method:
+        class: !require '../../Annotation/Method'
+        tags: ['annotation']
+        arguments:
+            - '@container'
+            - '@router'

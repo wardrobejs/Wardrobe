@@ -1,4 +1,4 @@
-const doctrine = require('doctrine');
+const doctrine = require('../doctrine');
 
 const MethodNotImplementedException = require('./Exception/MethodNotImplementedException');
 
