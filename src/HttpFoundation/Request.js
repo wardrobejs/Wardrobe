@@ -71,7 +71,9 @@ class Request
 
         let str = buffer.toString();
 
-        switch (content_type = content_type.toLowerCase()) {
+        content_type = content_type.split(';').shift().trim().toLowerCase();
+
+        switch (content_type) {
             case 'application/x-www-form-urlencoded':
                 return this._parseParameters(str);
             case 'application/json':
@@ -124,8 +126,6 @@ class Request
             default:
                 return undefined;
         }
-
-
     }
 
     _parseParameters (str, delim = '=')
