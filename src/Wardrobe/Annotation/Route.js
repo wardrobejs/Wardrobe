@@ -118,7 +118,7 @@ class Route
             }
         }
 
-        throw new NotFoundHttpException(`${request.url} does not match any route`, 404);
+        throw new NotFoundHttpException(`${request.legacy.url} does not match any route`, 404);
     }
 
     _findParameters (method, request, route)

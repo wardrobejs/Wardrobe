@@ -71,7 +71,9 @@ class Request
 
         let str = buffer.toString();
 
-        content_type = content_type.split(';').shift().trim().toLowerCase();
+        let content_type_data = content_type.split(';');
+        content_type          = content_type_data.shift().trim().toLowerCase();
+        content_type_data     = content_type_data.join(';');
 
         switch (content_type) {
             case 'application/x-www-form-urlencoded':
@@ -83,53 +85,13 @@ class Request
                     throw new Error(`Body is not in JSON format`);
                 }
             case 'multipart/form-data': // /^multipart\/(?:form-data|related)(?:;|$)/i:
-                let seperator = str.split('\r\n', 1)[0];
-                let data      = str
-                    .split(seperator)
-                    .filter(s => s.length)
-                    .map(s => s.trim())
-                    .map(s => s.split('\r\n\r\n'))
-                    .filter(a => a.length === 2);
-
-                let post  = {};
-                let files = {};
-
-                while (data.length) {
-                    let name, value, filename, contentType;
-                    let formData = data.shift();
-                    name         = formData[0].match(/name="(.*?)"/i)[1];
-                    value        = formData[1];
-
-                    if (formData[0].indexOf('filename') !== -1) {
-                        filename    = formData[0].match(/filename="(.*?)"/i)[1];
-                        contentType = formData[0].match(/content-type: (.*?)$/mi);
-                    }
-
-                    if (typeof filename !== 'undefined') {
-                        if (typeof files[name] === 'undefined') {
-                            files[name] = [];
-                        }
-                        files[name].push({
-                            filename:       filename,
-                            'content-type': contentType,
-                            content: value
-                        });
-                    } else {
-                        post[name] = value;
-                    }
-                }
-
-                return {
-                    post:  post,
-                    files: files
-                };
-
+                return this._parseMultipart(buffer, content_type_data);
             default:
                 return undefined;
         }
     }
 
-    _parseParameters (str, delim = '=')
+    _parseParameters (str, delim = '&')
     {
         str = str.trim('?');
 
@@ -145,11 +107,78 @@ class Request
                 key        = chunks[0].trim();
                 value      = chunks[1].trim('"');
             }
-            parameters[key] = value === true ? null : value;
+            if (value === true) {
+                parameters['value'] = key;
+            } else {
+                parameters[key] = value;
+            }
         }
 
         return parameters;
     }
+
+    /**
+     * @param {Buffer} data
+     * @param content_type_data
+     * @private
+     */
+    _parseMultipart (data, content_type_data)
+    {
+        if (!data instanceof Buffer) {
+            throw new Error(`data must be a Buffer`);
+        }
+
+        let delimiter = '\r\n';
+        let extra     = this._parseParameters(content_type_data.trim(), ';');
+        let boundary  = extra.boundary || data.toString().split('\r\n')[0].trim('-');
+
+        // A multipart can contain either properties or files
+        let body  = {};
+        let files = {};
+
+        let rough = data
+            .toString()
+            .split(boundary)
+            .map(l => l.split(delimiter + delimiter, 2).map(s => {
+                if (s.substr(-4) === '\r\n--') {
+                    return s.substr(0, s.length - 4);
+                }
+
+                return s;
+            }))
+            .filter(a => a.length === 2);
+
+        for (let d of rough) {
+            let headers = {};
+            d[0].trim().split(delimiter).map(s => {
+                let _                       = s.split(':');
+                headers[_[0].toLowerCase()] = this._parseParameters(_[1], ';');
+                return s;
+            });
+            let value = new Buffer(d[1]);
+
+            if (typeof headers['content-disposition'].filename === 'undefined') {
+                // normal
+                body[headers['content-disposition'].name] = d[1];
+            } else {
+                if(typeof files[headers['content-disposition'].name] === 'undefined') {
+                    files[headers['content-disposition'].name] = [];
+                }
+                files[headers['content-disposition'].name].push({
+                    name: headers['content-disposition'].filename,
+                    size: value.length,
+                    content: value,
+                    'content-type': headers['content-type'].value || 'text/plain'
+                });
+            }
+        }
+
+        return {
+            post: body,
+            files: files
+        }
+    }
+
 
 }
 
