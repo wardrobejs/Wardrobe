@@ -3,6 +3,8 @@ const FileBag      = require('./ParameterBag'); // todo: make FileBag
 const ServerBag    = require('./ParameterBag'); // todo: make ServerBag
 const HeaderBag    = require('./ParameterBag'); // todo: make HeaderBag
 
+const multipart = require('./MultipartParser');
+
 class Request
 {
     constructor (request)
@@ -14,14 +16,32 @@ class Request
         let url        = request.protocol + '://' + request.headers.host + parameters.shift();
         let query      = parameters.shift() || '';
 
-        let body = this._parseRequestBody(request.body, request.headers['content-type']);
+        let body = multipart.Parse(request.body, request.body.toString().split('\r\n')[0].trim('-'));
+
+        let files = {};
+        let fields = {};
+
+        for(let item of body) {
+            if(typeof item.filename !== 'undefined') {
+                if(typeof files[item.name] === 'undefined') {
+                    files[item.name] = [];
+                }
+                files[item.name].push({
+                    filename: item.filename,
+                    content: item.data,
+                    size: item.data.length,
+                });
+            } else {
+                fields[item.name] = item.data;
+            }
+        }
 
         this.initialize(
             this._parseParameters(query),
-            body ? body.post : undefined,
+            fields,
             {}, // attributes
             {}, // cookies
-            body ? body.files : undefined,
+            files,
             {},
             request.body
         );
