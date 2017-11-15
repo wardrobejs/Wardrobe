@@ -1,5 +1,7 @@
-const moment = require('moment');
+const moment         = require('moment');
 const SessionHandler = require('./Session/SessionHandler');
+
+const Request = require('../HttpFoundation/Request');
 
 class HttpKernel
 {
@@ -17,8 +19,8 @@ class HttpKernel
         request.session = this._session_handler.getSession(request, response);
 
         request.protocol = typeof request.connection.encrypted !== 'undefined' ? 'https' : 'http';
-        let static_file = path.join(this._kernel.getContainer().getParameter('project_dir'), 'web', request.url);
-        if (fs.existsSync(static_file) && !fs.lstatSync(static_file).isDirectory()) {
+        let static_file  = path.join(this._kernel.getContainer().getParameter('project_dir'), 'web', request.url);
+        if (request.method === 'GET' && fs.existsSync(static_file) && !fs.lstatSync(static_file).isDirectory()) {
             let mimetype = require('mime-types').lookup(static_file);
 
             response.setHeader('content-type', mimetype);
@@ -50,20 +52,19 @@ class HttpKernel
 
     async _realHandler (request)
     {
-        let parameters     = request.url.split('?');
-        request.url        = parameters.shift();
-        request.parameters = {};
+        // extract post body
+        request.body = await new Promise((resolve) => {
+            let body = new Buffer(0);
+            request.on('data', (data) => {
+                body = Buffer.concat([body, data], body.length + data.length);
+            });
 
-        let chunks = parameters.join('?').split('&');
-        while (chunks.length) {
-            let parameter = chunks.shift();
-            let KvP       = parameter.split('=');
-            let key       = KvP.shift();
+            request.on('end', () => {
+                resolve(body);
+            });
+        });
 
-            request.parameters[key] = KvP.join('=');
-        }
-
-        return await this._route.handle(request);
+        return await this._route.handle(new Request(request));
     }
 
 }

@@ -1,5 +1,4 @@
-const iterator   = require('../Helper/iterator'),
-      parameters = require('get-parameter-names');
+const parameters = require('get-parameter-names');
 
 const InvalidArgumentException = require('../Exception/InvalidArgumentException'),
       NotFoundHttpException    = require('../Exception/NotFoundHttpException'),
@@ -49,7 +48,6 @@ class Route
         }
 
         if (typeof this._routes[service.hostname || '*'][data.path] !== 'undefined') {
-            let current = this._routes[service.hostname || '*'][data.path];
             throw new LogicException(`Trying to register two routes with the same url ${service.hostname + ' ' || ' '}"${data.path}"`);
         }
 
@@ -89,8 +87,14 @@ class Route
         return true;
     }
 
+    /**
+     * @param {Request} request
+     * @return {Promise.<*>}
+     */
     async handle (request)
     {
+        request = request.legacy;
+
         let host = request.headers.host.substr(0, request.headers.host.indexOf(':'));
 
         if (typeof this._routes[host] === 'undefined') {
@@ -103,6 +107,8 @@ class Route
             }
             let router = this._routes[host][route];
             let method = router.method;
+
+            // todo: verify http method ("GET", "POST", etc..)
 
             if (this._accepts(request, route, host)) {
                 let c    = this._container.get(router.service);
