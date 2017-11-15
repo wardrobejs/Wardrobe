@@ -111,7 +111,8 @@ class Request
                         }
                         files[name].push({
                             filename:       filename,
-                            'content-type': contentType
+                            'content-type': contentType,
+                            content: value
                         });
                     } else {
                         post[name] = value;
