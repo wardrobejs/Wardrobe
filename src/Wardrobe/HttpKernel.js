@@ -31,6 +31,9 @@ class HttpKernel
                 let handler = await this._realHandler(request, response);
                 if (typeof handler !== 'string' && !(handler instanceof Buffer)) {
                     handler = JSON.stringify(handler);
+                    response.setHeader('content-type', 'application/json');
+                } else {
+                    response.setHeader('content-type', 'text/html');
                 }
 
                 response.write(handler);
