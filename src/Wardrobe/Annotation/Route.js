@@ -93,9 +93,9 @@ class Route
      */
     async handle (request)
     {
-        request = request.legacy;
+        let legacy = request.legacy;
 
-        let host = request.headers.host.substr(0, request.headers.host.indexOf(':'));
+        let host = legacy.headers.host.substr(0, legacy.headers.host.indexOf(':'));
 
         if (typeof this._routes[host] === 'undefined') {
             host = '*';
@@ -110,7 +110,7 @@ class Route
 
             // todo: verify http method ("GET", "POST", etc..)
 
-            if (this._accepts(request, route, host)) {
+            if (this._accepts(legacy, route, host)) {
                 let c    = this._container.get(router.service);
                 let func = c[router.method];
                 let args = this._findParameters(func, request, route);
@@ -123,7 +123,7 @@ class Route
 
     _findParameters (method, request, route)
     {
-        let url = request.url;
+        let url = request.legacy.url;
 
         /** @var {Array} args */
         let args = parameters(method);
