@@ -82,8 +82,8 @@ class InputRequest
     {
         return this._body.toString().split('&').map(kvp => {
             let k = kvp.split('=');
-            let a = k[0].trim();
-            let b = k[1].trim();
+            let a = decodeURIComponent(k[0]).trim();
+            let b = decodeURIComponent(k[1]).trim();
             return {
                 name: a,
                 data: b
