@@ -7,10 +7,10 @@
 (function () {
     'use strict';
 
-    var VERSION;
+    // var VERSION;
 
-    VERSION = require('../package.json').version;
-    exports.VERSION = VERSION;
+    // VERSION = require('../../../../wardrobe-standard/package.json').version;
+    // exports.VERSION = VERSION;
 
     function DoctrineError(message) {
         this.name = 'DoctrineError';

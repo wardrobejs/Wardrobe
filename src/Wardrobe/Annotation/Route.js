@@ -28,12 +28,16 @@ class Route
 
         let controller = this._container.get(data._metadata.service);
         let action = controller[data._metadata.method];
+        let host;
+        if(
+            typeof this._services[data._metadata.service] !== 'undefined'
+        ) {
+            if(typeof this._services[data._metadata.service].prefix !== 'undefined') {
+                data.path = this._services[data._metadata.service].prefix + data.path;
+            }
 
-        if(typeof this._services[data._metadata.service].prefix !== 'undefined') {
-            data.path = this._services[data._metadata.service].prefix + data.path;
+            host = this._services[data._metadata.service].host;
         }
-
-        let host = this._services[data._metadata.service].host;
 
         let requestMatch = new RequestMatcher(controller, action, data.path, host);
 

@@ -803,7 +803,7 @@
         exports.parse = parse;
     }(jsdoc = {}));
 
-    exports.version = utility.VERSION;
+    // exports.version = utility.VERSION;
     exports.parse = jsdoc.parse;
     exports.parseType = typed.parseType;
     exports.parseParamType = typed.parseParamType;
