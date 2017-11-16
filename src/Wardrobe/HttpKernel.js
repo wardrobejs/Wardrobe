@@ -67,7 +67,6 @@ class HttpKernel
             });
         });
 
-        // todo: middleware/post processing
         return await this._router.route(new Request(request));
     }
 

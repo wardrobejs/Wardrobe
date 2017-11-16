@@ -2,16 +2,11 @@ const RequestBody  = require('./InputRequest');
 const ParameterBag = require('./ParameterBag');
 const FileBag      = require('./ParameterBag'); // todo: make FileBag
 const ServerBag    = require('./ParameterBag'); // todo: make ServerBag
-const HeaderBag    = require('./ParameterBag'); // todo: make HeaderBag
 
 class Request
 {
     constructor (request)
     {
-        let parameters = request.url.split('?');
-        let url        = request.protocol + '://' + request.headers.host + parameters.shift();
-        let query      = parameters.shift() || '';
-
         let input = new RequestBody(request);
 
         this.initialize(
@@ -46,7 +41,6 @@ class Request
         this.cookies                = new ParameterBag(cookies);
         this.files                  = new FileBag(files);
         this.server                 = new ServerBag(server);
-        // this.headers                = new HeaderBag(this.server.getHeaders());
         this.content                = content;
         this.languages              = null;
         this.charsets               = null;
@@ -88,6 +82,13 @@ class Request
         result['REMOTE_ADDR']          = request.connection.remoteAddress.replace(/::ffff:/, '');
         result['CONTENT_TYPE']         = request.headers['content-type'];
 
+        for (let header of Object.keys(request.headers)) {
+            let name = header.toUpperCase().replace(/-/g, '_');
+            if (typeof result[name] === 'undefined' && typeof result[`HTTP_${name}`] === 'undefined') {
+                result[name] = request.headers[header];
+            }
+        }
+
         if (request.protocol === 'https') {
             result['HTTPS'] = 'on';
         }
@@ -104,10 +105,41 @@ class Request
 
         const ordered = {};
         Object.keys(result).sort().forEach(function (key) {
-            ordered[key] = result[key];
+            if (typeof result[key] !== 'undefined') {
+                ordered[key.toLowerCase()] = result[key];
+            }
         });
 
         return ordered;
+    }
+
+    get (key, defaultValue)
+    {
+        if (this.request.has(key)) {
+            return this.request.get(key);
+        }
+
+        if (this.query.has(key)) {
+            return this.query.get(key);
+        }
+
+        if (this.attributes.has(key)) {
+            return this.attributes.get(key);
+        }
+
+        if (this.cookies.has(key)) {
+            return this.cookies.get(key);
+        }
+
+        if (this.files.has(key)) {
+            return this.files.get(key);
+        }
+
+        if (this.server.has(key)) {
+            return this.server.get(key);
+        }
+
+        return defaultValue;
     }
 
     getMethod ()

@@ -8,7 +8,10 @@ class ParameterBag
      */
     constructor (parameters = {})
     {
-        this._parameters = parameters;
+        this._parameters = {};
+        for (let key of Object.keys(parameters)) {
+            this.set(key, parameters[key.toLowerCase()]);
+        }
     }
 
     /**
@@ -53,7 +56,7 @@ class ParameterBag
      */
     get (key, defaultValue = null)
     {
-        return this._parameters[key] || defaultValue;
+        return this._parameters[key.toLowerCase()] || defaultValue;
     }
 
     /**
@@ -62,7 +65,7 @@ class ParameterBag
      */
     set (key, value)
     {
-        this._parameters[key] = value;
+        this._parameters[key.toLowerCase()] = value;
     }
 
     /**
@@ -71,7 +74,7 @@ class ParameterBag
      */
     has (key)
     {
-        return typeof this._parameters[key] !== 'undefined';
+        return typeof this._parameters[key.toLowerCase()] !== 'undefined';
     }
 
     /**
@@ -79,7 +82,7 @@ class ParameterBag
      */
     remove (key)
     {
-        delete this._parameters[key];
+        delete this._parameters[key.toLowerCase()];
     }
 
     /**
@@ -145,8 +148,8 @@ class ParameterBag
     {
         let output = {};
         for (let key of Object.keys(this._parameters)) {
-            if (true === func(key, this._parameters[key])) {
-                output[key] = this._parameters[key];
+            if (true === func(key, this._parameters[key.toLowerCase()])) {
+                output[key.toLowerCase()] = this._parameters[key.toLowerCase()];
             }
         }
 
@@ -156,7 +159,8 @@ class ParameterBag
     /**
      * @return {Object}
      */
-    getIterator () {
+    getIterator ()
+    {
         let o = {...this._parameters};
 
         o[Symbol.iterator] = function () {
