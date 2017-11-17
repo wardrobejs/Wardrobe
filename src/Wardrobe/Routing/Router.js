@@ -58,10 +58,22 @@ class Router
                 );
 
                 // Should this be the router's responsibility?
-                // also, move post_processors somewhere else!
+                // also, move post_processors somewhere else!  todo: <- response object!
                 if(typeof  request_matcher.getAction().post_processors !== 'undefined') {
                     for (let post_processor of request_matcher.getAction().post_processors) {
-                        result = post_processor.func(...post_processor.args, result);
+
+                        if(typeof post_processor['content-type'] === 'undefined') {
+                            result = post_processor.func(...post_processor.args, result);
+                        } else {
+
+                            if(request.server.get('HTTP_ACCEPT').split(',').indexOf(post_processor['content-type']) !== -1 ||
+                                request.server.get('HTTP_ACCEPT').split(',').indexOf('*/*') !== -1) {
+                                result = post_processor.func(...post_processor.args, result);
+                            }
+
+                        }
+
+
                     }
                 }
 
