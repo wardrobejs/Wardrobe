@@ -1,6 +1,6 @@
 {
   "name": "@wardrobe/wardrobe",
-  "version": "2.0.15",
+  "version": "2.0.16",
   "description": "Webstack for NodeJS",
   "main": "src/index.js",
   "author": "Yme-Jan Iedema <yme-jan@iedema.me>",
