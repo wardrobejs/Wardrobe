@@ -1,9 +1,12 @@
 const parameters = require('get-parameter-names');
+const SessionBag = require('../../HttpFoundation/ParameterBag');
+const Request    = require('../../HttpFoundation/Request');
 
 class Router
 {
-    constructor ()
+    constructor (session_manager)
     {
+        this._session_manager  = session_manager;
         this._request_matchers = [];
     }
 
@@ -35,10 +38,13 @@ class Router
     }
 
     /**
-     * @param {Request} request
+     * @param {Request} req
      */
-    async route (request)
+    async route (req)
     {
+        let request = new Request(req);
+        let session = req.session;
+
         let request_uri = request.server.get('REQUEST_URI');
         /** @var {RequestMatcher} request_matcher */
         for (let request_matcher of this._request_matchers) {
@@ -51,6 +57,7 @@ class Router
                 );
 
                 args[args.indexOf('request')] = request;
+                args[args.indexOf('session')] = session;
 
                 let result = await request_matcher.getAction().apply(
                     request_matcher.getController(),
@@ -59,21 +66,18 @@ class Router
 
                 // Should this be the router's responsibility?
                 // also, move post_processors somewhere else!  todo: <- response object!
-                if(typeof  request_matcher.getAction().post_processors !== 'undefined') {
+                if (typeof  request_matcher.getAction().post_processors !== 'undefined') {
                     for (let post_processor of request_matcher.getAction().post_processors) {
 
-                        if(typeof post_processor['content-type'] === 'undefined') {
+                        if (typeof post_processor['content-type'] === 'undefined') {
                             result = post_processor.func(...post_processor.args, result);
                         } else {
 
-                            if(request.server.get('HTTP_ACCEPT').split(',').indexOf(post_processor['content-type']) !== -1 ||
+                            if (request.server.get('HTTP_ACCEPT').split(',').indexOf(post_processor['content-type']) !== -1 ||
                                 request.server.get('HTTP_ACCEPT').split(',').indexOf('*/*') !== -1) {
                                 result = post_processor.func(...post_processor.args, result);
                             }
-
                         }
-
-
                     }
                 }
 

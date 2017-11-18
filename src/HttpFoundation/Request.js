@@ -3,17 +3,28 @@ const ParameterBag = require('./ParameterBag');
 const FileBag      = require('./ParameterBag'); // todo: make FileBag
 const ServerBag    = require('./ParameterBag'); // todo: make ServerBag
 
+const Cookie = require('./Cookie');
+
 class Request
 {
     constructor (request)
     {
-        let input = new RequestBody(request);
+        let input       = new RequestBody(request);
+        let cookieStore = {};
+
+        if (typeof request.headers.cookie !== 'undefined') {
+            let cookies = request.headers.cookie.split(';').map(c => Cookie.fromString(c.trim()));
+
+            for (let cookie of cookies) {
+                cookieStore[cookie.name] = cookie;
+            }
+        }
 
         this.initialize(
             input.getQuery(),
             input.getFields(),
-            new ParameterBag(),
-            {}, // cookies
+            {},
+            cookieStore, // cookies
             input.getFiles(),
             this._parseServer(request),
             request.body

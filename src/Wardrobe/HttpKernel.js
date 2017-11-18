@@ -1,8 +1,6 @@
 const moment         = require('moment');
 const SessionHandler = require('./Session/SessionHandler');
 
-const Request = require('../HttpFoundation/Request');
-
 class HttpKernel
 {
     constructor (kernel, router, logger)
@@ -67,7 +65,7 @@ class HttpKernel
             });
         });
 
-        return await this._router.route(new Request(request));
+        return await this._router.route(request);
     }
 
 }

@@ -1,9 +1,11 @@
 const uuid = require('uuid4');
+const ParameterBag = require('../../HttpFoundation/ParameterBag');
 
-class Session
+class Session extends ParameterBag
 {
     constructor ()
     {
+        super();
         Object.defineProperty(this, '__session_id__', {
             value:      uuid(),
             enumerable: false,
@@ -15,30 +17,6 @@ class Session
             enumerable: false,
             writable:   true,
         });
-    }
-
-    set (name, value)
-    {
-        if (name === '__session_id__' || name === '__time__') {
-            throw new Error(`Illigal name: ${name}`);
-        }
-
-        Object.defineProperty(this, name, {
-            value:      value,
-            enumerable: true,
-            writable:   true,
-        });
-
-        return this;
-    }
-
-    get (name)
-    {
-        if (name === '__session_id__' || name === '__time__') {
-            throw new Error(`Illigal name: ${name}`);
-        }
-
-        return this[name];
     }
 
     refresh ()

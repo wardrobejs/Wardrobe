@@ -10,7 +10,7 @@ class ParameterBag
     {
         this._parameters = {};
         for (let key of Object.keys(parameters)) {
-            this.set(key, parameters[key.toLowerCase()]);
+            this.set(key.toLowerCase(), parameters[key]);
         }
     }
 

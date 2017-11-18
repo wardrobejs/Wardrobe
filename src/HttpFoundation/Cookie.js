@@ -87,11 +87,11 @@ class Cookie
         this.httpOnly = httpOnly;
         this.raw      = raw;
 
-        if (null !== sameSite) {
+        if (typeof sameSite !== 'undefined') {
             sameSite = sameSite.toLowerCase();
         }
 
-        if (['lax', 'strict', null].indexOf(sameSite) === -1) {
+        if (['lax', 'strict', null, undefined].indexOf(sameSite) === -1) {
             throw new Error(`The "sameSite" parameter value is not valid.`);
         }
 
