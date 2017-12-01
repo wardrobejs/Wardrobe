@@ -72,7 +72,6 @@ class InputRequest
                 return this._parse_json();
             case 'multipart/form-data':
                 return this._parse_multipart();
-                break;
             default:
                 return this._parse_url_encoded();
         }

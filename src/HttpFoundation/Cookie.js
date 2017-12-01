@@ -52,13 +52,13 @@ class Cookie
      * @param {String|null} value
      * @param {Number|String|Date} expire
      * @param {String} path
-     * @param {String} domain
-     * @param {String} secure
-     * @param {String} httpOnly
+     * @param {String|null} domain
+     * @param {Boolean} secure
+     * @param {Boolean} httpOnly
      * @param {String} raw
-     * @param {String} sameSite
+     * @param {String|null|undefined} sameSite
      */
-    constructor (name, value, expire, path, domain, secure, httpOnly, raw, sameSite)
+    constructor (name, value, expire, path = '/', domain = null, secure = false, httpOnly = true, raw = '', sameSite = null)
     {
         if (name.match(/[=,; \t\r\n\013\014]/) !== null) {
             throw new Error(`The cookie name "${name}" contains invalid characters.`);
@@ -87,7 +87,7 @@ class Cookie
         this.httpOnly = httpOnly;
         this.raw      = raw;
 
-        if (typeof sameSite !== 'undefined') {
+        if (typeof sameSite !== 'undefined' && sameSite !== null) {
             sameSite = sameSite.toLowerCase();
         }
 

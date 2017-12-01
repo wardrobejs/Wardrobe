@@ -1,7 +1,9 @@
+const MimeTypes = require('mime-types');
+
 const RequestBody  = require('./InputRequest');
 const ParameterBag = require('./ParameterBag');
 const FileBag      = require('./ParameterBag'); // todo: make FileBag
-const ServerBag    = require('./ParameterBag'); // todo: make ServerBag
+const ServerBag    = require('./ServerBag');
 
 const Cookie = require('./Cookie');
 
@@ -9,9 +11,12 @@ class Request
 {
     constructor (request)
     {
+        this.session = request.session;
+
         let input       = new RequestBody(request);
         let cookieStore = {};
 
+        /** @var {String} request.headers.cookie */
         if (typeof request.headers.cookie !== 'undefined') {
             let cookies = request.headers.cookie.split(';').map(c => Cookie.fromString(c.trim()));
 
@@ -24,7 +29,7 @@ class Request
             input.getQuery(),
             input.getFields(),
             {},
-            cookieStore, // cookies
+            cookieStore,
             input.getFiles(),
             this._parseServer(request),
             request.body
@@ -52,6 +57,7 @@ class Request
         this.cookies                = new ParameterBag(cookies);
         this.files                  = new FileBag(files);
         this.server                 = new ServerBag(server);
+        this.headers                = this.server.getHeaders();
         this.content                = content;
         this.languages              = null;
         this.charsets               = null;
@@ -61,7 +67,7 @@ class Request
         this.requestUri             = null;
         this.baseUrl                = null;
         this.basePath               = null;
-        this.method                 = null;
+        this.method                 = this.server.get('REQUEST_METHOD');
         this.format                 = null;
     }
 
@@ -172,6 +178,30 @@ class Request
     {
         // todo: https://github.com/symfony/http-foundation/blob/master/Request.php#L767
         return this.server.get('REMOTE_ADDR');
+    }
+
+    getRequestFormat (_default = 'html')
+    {
+        if (typeof this.format === 'undefined' || this.format === null) {
+            this.format = this.attributes.get('_format');
+        }
+
+        return this.format || _default;
+    }
+
+    getMimeType (format)
+    {
+        return MimeTypes.lookup(format);
+    }
+
+    isMethod (method)
+    {
+        return this.method.toLowerCase() === method.toLowerCase();
+    }
+
+    getSession ()
+    {
+        return this.session;
     }
 
 }
