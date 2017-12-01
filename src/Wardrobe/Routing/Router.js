@@ -1,12 +1,9 @@
 const parameters = require('get-parameter-names');
-const SessionBag = require('../../HttpFoundation/ParameterBag');
-const Request    = require('../../HttpFoundation/Request');
 
 class Router
 {
-    constructor (session_manager)
+    constructor ()
     {
-        this._session_manager  = session_manager;
         this._request_matchers = [];
     }
 
@@ -38,13 +35,10 @@ class Router
     }
 
     /**
-     * @param {Request} req
+     * @param {Request} request
      */
-    async route (req)
+    async route (request)
     {
-        let request = new Request(req);
-        let session = req.session;
-
         let request_uri = request.server.get('REQUEST_URI');
         /** @var {RequestMatcher} request_matcher */
         for (let request_matcher of this._request_matchers) {
@@ -57,7 +51,6 @@ class Router
                 );
 
                 args[args.indexOf('request')] = request;
-                args[args.indexOf('session')] = session;
 
                 let result = await request_matcher.getAction().apply(
                     request_matcher.getController(),
@@ -66,7 +59,7 @@ class Router
 
                 // Should this be the router's responsibility?
                 // also, move post_processors somewhere else!  todo: <- response object!
-                if (typeof  request_matcher.getAction().post_processors !== 'undefined') {
+                if (typeof request_matcher.getAction().post_processors !== 'undefined') {
                     for (let post_processor of request_matcher.getAction().post_processors) {
 
                         if (typeof post_processor['content-type'] === 'undefined') {
@@ -85,7 +78,7 @@ class Router
             }
         }
 
-        throw new Error(`${request_uri} does not match any route`, 404);
+        throw new HttpError(`${request_uri} does not match any route`, 404);
     }
 
     _compileParameters (request_uri, args, route)

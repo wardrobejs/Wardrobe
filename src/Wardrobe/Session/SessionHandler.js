@@ -53,7 +53,7 @@ class SessionHandler
         let ret = {};
         request.headers['cookie'].split(';').map(cookie => {
             let data     = cookie.split('=');
-            ret[data[0]] = data[1];
+            ret[data[0].trim()] = (data[1] || '').trim();
         });
         return ret;
     }

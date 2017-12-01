@@ -5,11 +5,8 @@ const wrequire = require('./Helper/wrequire'),
       http     = require('http'),
       https    = require('https');
 
-const AnnotationParser              = require('./AnnotationParser'),
-      YamlFileLoader                = require('./Loader/YamlFileLoader'),
-      MethodNotImplementedException = require('./Exception/MethodNotImplementedException'),
-      LogicException                = require('./Exception/LogicException'),
-      InvalidArgumentException      = require('./Exception/InvalidArgumentException');
+const AnnotationParser = require('./AnnotationParser'),
+      YamlFileLoader   = require('./Loader/YamlFileLoader');
 
 class Kernel
 {
@@ -70,7 +67,7 @@ class Kernel
             let bundleInstance = new bundle(this._container);
             let name           = bundleInstance.getName();
             if (this._bundles.hasOwnProperty(bundleInstance.getName())) {
-                throw new LogicException(`Trying to register two bundles with the same name "${name}"`);
+                throw new Error(`Trying to register two bundles with the same name "${name}"`);
             }
 
             let dirname = path.dirname(search(require.cache, 'filename', `${bundle.name}.js`).filename);
@@ -165,7 +162,7 @@ class Kernel
 
     registerBundles ()
     {
-        throw new MethodNotImplementedException(this, 'registerBundles()');
+        throw new Error(`registerBundles() not implemented in ${this.constructor.name}`);
     }
 
     getBundles ()
@@ -176,7 +173,7 @@ class Kernel
     getBundle (name)
     {
         if (!this._bundles.hasOwnProperty(name)) {
-            throw new InvalidArgumentException(`Bundle "${name}" does not exist or it is not enabled. Maybe you forgot to add it in the registerBundles() method of your ${this.constructor.name}.js file?'`);
+            throw new Error(`Bundle "${name}" does not exist or it is not enabled. Maybe you forgot to add it in the registerBundles() method of your ${this.constructor.name}.js file?'`);
         }
 
         return this._bundles[name];
@@ -193,7 +190,7 @@ class Kernel
 
     registerContainerConfiguration ()
     {
-        throw new MethodNotImplementedException(this, 'registerContainerConfiguration(loader)');
+        throw new Error(`registerContainerConfiguration(loader) not implemented in ${this.constructor.name}`);
     }
 }
 

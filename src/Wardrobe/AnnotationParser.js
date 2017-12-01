@@ -1,13 +1,11 @@
 const doctrine = require('../doctrine');
 
-const MethodNotImplementedException = require('./Exception/MethodNotImplementedException');
-
 class AnnotationParser
 {
 
     constructor (kernel)
     {
-        this._kernel    = kernel;
+        this._kernel = kernel;
     }
 
     parse (_module)
@@ -47,7 +45,7 @@ class AnnotationParser
 
                 let resolvedClass = this.resolve(tag.title);
                 if (typeof resolvedClass.compile === 'undefined') {
-                    throw new MethodNotImplementedException(`${tag.title} does not implement compile(data)`);
+                    throw new Error(`${tag.title} does not implement compile(data)`);
                 }
 
                 resolvedClass.compile(data, _module);

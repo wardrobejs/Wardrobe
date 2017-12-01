@@ -1,13 +1,36 @@
 global.path = require('path');
 global.fs   = require('fs-extra');
 
+process.on('unhandledRejection', (reason) => {
+    console.error(reason);
+});
+
 module.exports = {
     // Core
+    DI:               require('apex-di'),
     Kernel:           require('./Wardrobe/Kernel'),
     Bundle:           require('./Wardrobe/Bundle'),
     Controller:       require('./Wardrobe/Controller'),
-    DI:               require('apex-di'),
     AnnotationParser: require('./Wardrobe/AnnotationParser'),
+    Response:         require('./HttpFoundation/Response'),
+    Cookie:           require('./HttpFoundation/Cookie'),
+};
+
+global.HttpError = class extends Error
+{
+    constructor (message, code)
+    {
+        super(message, code);
+        this.code = code;
+    }
+};
+
+global.array = function (value) {
+    if (value instanceof Array) {
+        return value;
+    }
+
+    return [value];
 };
 
 Array.prototype.first = function () {

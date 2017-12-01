@@ -1,5 +1,4 @@
-const NotFoundHttpException = require('./Exception/NotFoundHttpException');
-const extract               = require('./Helper/extract');
+const extract = require('./Helper/extract');
 
 class Controller
 {
@@ -23,7 +22,7 @@ class Controller
         let file = this._resolve(template);
 
         if (!file) {
-            throw new NotFoundHttpException(`Unable to find ${template} for rendering`);
+            throw new HttpError(`Unable to find ${template} for rendering`, 404);
         }
 
         if (!this._swig) {
@@ -43,9 +42,9 @@ class Controller
             name     = kenel.getBundle(matches[1]).path;
             template = matches[2];
         } else {
-            let bundles  = Object.values(require.cache).filter(m => m.exports.toString() === this.constructor.toString());
-            let bundle   = extract(bundles.map(b => b.filename.split(path.sep).reverse().filter(p => p.indexOf('Bundle') !== -1)));
-            name = kenel.getBundle(bundle).path;
+            let bundles = Object.values(require.cache).filter(m => m.exports.toString() === this.constructor.toString());
+            let bundle  = extract(bundles.map(b => b.filename.split(path.sep).reverse().filter(p => p.indexOf('Bundle') !== -1)));
+            name        = kenel.getBundle(bundle).path;
         }
 
         template = path.join(name, 'Resources', 'views', template);
