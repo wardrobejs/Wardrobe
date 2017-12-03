@@ -7,6 +7,7 @@ services:
         arguments:
             - '@kernel'
             - '@router'
+            - '@event'
             - '@logger'
 
     config:
@@ -14,6 +15,9 @@ services:
         arguments:
             - '@kernel'
 
+    event:
+        class: !require '../../Pipeline/Event'
+        
     router:
         class: !require '../../Routing/Router'
 
@@ -35,3 +39,5 @@ services:
         arguments:
             - '@container'
             - '@router'
+
+    

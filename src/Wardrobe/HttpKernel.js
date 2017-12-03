@@ -5,10 +5,11 @@ const Response       = require('../HttpFoundation/Response');
 
 class HttpKernel
 {
-    constructor (kernel, router, logger)
+    constructor (kernel, router, event, logger)
     {
         this._kernel = kernel;
         this._router = router;
+        this._event  = event;
         this._logger = logger;
 
         this._session_handler = new SessionHandler();
@@ -29,6 +30,14 @@ class HttpKernel
         try {
             let actionResponse = await this._router.route(actionRequest);
 
+            let eventData = {
+                data: actionResponse
+            };
+
+            this._event.emit('before:render', eventData);
+
+            actionResponse = eventData.data;
+            
             if (!(actionResponse instanceof Response)) {
                 actionResponse = new Response(actionResponse);
             }
