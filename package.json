@@ -17,7 +17,7 @@
     "get-parameter-names": "^0.3.0",
     "globby": "^6.1.0",
     "isarray": "^2.0.2",
-    "js-yaml": "latest",
+    "js-yaml": "^3.13.1",
     "mime-types": "^2.1.17",
     "moment": "^2.19.2",
     "uuid4": "^1.0.0"
