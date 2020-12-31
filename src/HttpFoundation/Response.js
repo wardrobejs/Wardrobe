@@ -70,7 +70,7 @@ class Response
         };
     }
 
-    constructor (content, code = 200, headers = [])
+    constructor (content, code = 200, headers = {})
     {
         this.headers = new ResponseHeaderBag(headers);
         this.setContent(content);
@@ -98,7 +98,7 @@ class Response
 
             let charset = this.charSet || 'UTF-8';
             if (!headers.has('content-type')) {
-                headers.set(`content-type', 'text/html; charset=${charset}`);
+                headers.set('content-type', `text/html; charset=${charset}`);
             } else if (headers.get('content-type').indexOf('text/') === 0 && headers.get('content-type').toLowerCase().indexOf('charset') === -1) {
                 headers.set('content-type', headers.get('content-type') + `; charset=${charset}`);
             }

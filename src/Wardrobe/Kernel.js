@@ -128,7 +128,7 @@ class Kernel
         };
 
         if (typeof options['ssl'] !== 'undefined') {
-            https.createServer(options['ssl'], this._handle.bind(this)).listen(port, started);
+            https.createServer(options['ssl'], this.getHttpKernel().handle.bind(this.getHttpKernel())).listen(port, started);
             return;
         }
 

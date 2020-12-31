@@ -56,7 +56,7 @@ class ParameterBag
      */
     get (key, defaultValue = null)
     {
-        return this._parameters[key.toLowerCase()] || defaultValue;
+        return decodeURIComponent(this._parameters[key.toLowerCase()] || defaultValue);
     }
 
     /**

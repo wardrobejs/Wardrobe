@@ -84,7 +84,8 @@ class ResponseHeaderBag extends HeaderBag
 
     remove (key)
     {
-        throw new Error(`Not yet implemented`);
+        super.remove(key);
+        delete this.headerNames[key];
     }
 
     hasCacheControlDirective (key)

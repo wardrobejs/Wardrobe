@@ -12,6 +12,11 @@ class Controller
         this._container = container;
     }
 
+    get (key)
+    {
+        return this._container(key);
+    }
+
     getContainer ()
     {
         return this._container;

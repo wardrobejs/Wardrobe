@@ -13,6 +13,7 @@ module.exports = {
     Controller:       require('./Wardrobe/Controller'),
     AnnotationParser: require('./Wardrobe/AnnotationParser'),
     Response:         require('./HttpFoundation/Response'),
+    RedirectResponse: require('./HttpFoundation/RedirectResponse'),
     Cookie:           require('./HttpFoundation/Cookie'),
 };
 

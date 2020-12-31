@@ -159,6 +159,17 @@ class Request
         return defaultValue;
     }
 
+    has (key)
+    {
+        return this.request.has(key) ||
+            this.query.has(key) ||
+            this.attributes.has(key) ||
+            this.cookies.has(key) ||
+            this.files.has(key) ||
+            this.server.has(key);
+    }
+
+
     getMethod ()
     {
         return this.server.get('REQUEST_METHOD');
